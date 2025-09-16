@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/farmabook
+    username: ganesh
+    password: "Ganeshcb17"
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  security:
+    user:
+      name: ganesh
+      password: ganesh417
+
+server:
+  port: 8080
