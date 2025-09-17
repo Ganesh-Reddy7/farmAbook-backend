@@ -8,7 +8,6 @@ import lombok.Data;
 @Data
 public class WorkerDTO {
 
-
     private Long id;
 
     @NotBlank(message = "Name is required")
@@ -24,4 +23,44 @@ public class WorkerDTO {
 
     @NotNull(message = "Investment ID is required")
     private Long investmentId;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public Double getWage() {
+        return wage;
+    }
+
+    public void setWage(Double wage) {
+        this.wage = wage;
+    }
+
+    public Long getInvestmentId() {
+        return investmentId;
+    }
+
+    public void setInvestmentId(Long investmentId) {
+        this.investmentId = investmentId;
+    }
 }
