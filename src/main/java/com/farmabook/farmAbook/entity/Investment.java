@@ -14,6 +14,8 @@ public class Investment {
     private String description;
     private LocalDate date;
     private Double amount;
+    private Double remainingAmount; // ✅ new field
+
 
     @ManyToOne
     @JoinColumn(name = "farmer_id")
@@ -46,4 +48,8 @@ public class Investment {
 
     public List<ReturnEntry> getReturnEntries() { return returnEntries; }
     public void setReturnEntries(List<ReturnEntry> returnEntries) { this.returnEntries = returnEntries; }
+
+    public Double getRemainingAmount() { return remainingAmount; }
+    public void setRemainingAmount(Double remainingAmount) { this.remainingAmount = remainingAmount; }
+
 }

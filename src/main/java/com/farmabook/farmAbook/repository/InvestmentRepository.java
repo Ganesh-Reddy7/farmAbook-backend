@@ -16,4 +16,7 @@ public interface InvestmentRepository extends JpaRepository<Investment, Long> {
 
     List<Investment> findByFarmerIdAndDateBetween(Long farmerId, LocalDate startDate, LocalDate endDate);
 
+    List<Investment> findByDateBetween(LocalDate startDate, LocalDate endDate);
+
+
 }

@@ -24,6 +24,9 @@ public class InvestmentDTO {
     @NotNull(message = "Farmer ID is required")
     private Long farmerId;  // relation to Farmer
 
+    private Double remainingAmount; // ✅ new field
+
+
     public Long getId() {
         return id;
     }
@@ -63,4 +66,8 @@ public class InvestmentDTO {
     public void setFarmerId(Long farmerId) {
         this.farmerId = farmerId;
     }
+
+    public Double getRemainingAmount() { return remainingAmount; }
+
+    public void setRemainingAmount(Double remainingAmount) { this.remainingAmount = remainingAmount; }
 }

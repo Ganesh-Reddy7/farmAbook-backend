@@ -1,6 +1,7 @@
 package com.farmabook.farmAbook.controller;
 
 import com.farmabook.farmAbook.dto.InvestmentDTO;
+import com.farmabook.farmAbook.dto.InvestmentWorkerDTO;
 import com.farmabook.farmAbook.service.InvestmentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -45,4 +46,17 @@ public class InvestmentController {
         investmentService.deleteInvestment(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/create-with-workers")
+    public ResponseEntity<InvestmentDTO> createInvestmentWithWorkers(
+            @Valid @RequestBody InvestmentWorkerDTO dto) {
+        InvestmentDTO created = investmentService.createInvestmentWithWorkers(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @GetMapping("/getInvestments/{year}")
+    public ResponseEntity<List<InvestmentDTO>> getInvestmentsByFinancialYear(@PathVariable int year) {
+        return ResponseEntity.ok(investmentService.getInvestmentsByFinancialYear(year));
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.farmabook.farmAbook.controller;
 
 import com.farmabook.farmAbook.dto.WorkerDTO;
+import com.farmabook.farmAbook.dto.PaymentUpdateRequest;
 import com.farmabook.farmAbook.service.WorkerService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -20,9 +21,15 @@ public class WorkerController {
     }
 
     @PostMapping
-    public ResponseEntity<WorkerDTO> createWorker(@Valid @RequestBody WorkerDTO workerDTO) {
-        WorkerDTO created = workerService.createWorker(workerDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<WorkerDTO> createWorker(@Valid @RequestBody WorkerDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(workerService.createWorker(dto));
+    }
+
+    @PostMapping("/investment/{investmentId}/bulk")
+    public ResponseEntity<List<WorkerDTO>> addWorkersBulk(@PathVariable Long investmentId,
+                                                          @Valid @RequestBody List<WorkerDTO> workers) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(workerService.addWorkersToInvestment(investmentId, workers));
     }
 
     @GetMapping
@@ -44,5 +51,19 @@ public class WorkerController {
     public ResponseEntity<Void> deleteWorker(@PathVariable Long id) {
         workerService.deleteWorker(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/payment")
+    public ResponseEntity<WorkerDTO> updatePaymentStatus(@PathVariable Long id,
+                                                         @RequestParam boolean paymentDone) {
+        return ResponseEntity.ok(workerService.updatePaymentStatus(id, paymentDone));
+    }
+
+    @PatchMapping("/investment/{investmentId}/payments")
+    public ResponseEntity<List<WorkerDTO>> batchUpdatePayments(@PathVariable Long investmentId,
+                                                               @RequestBody PaymentUpdateRequest request) {
+        return ResponseEntity.ok(
+                workerService.updateWorkersPaymentStatus(investmentId, request.getWorkerIds(), request.isPaymentDone())
+        );
     }
 }

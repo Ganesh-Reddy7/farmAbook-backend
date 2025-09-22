@@ -12,6 +12,8 @@ public class Worker {
     private String name;
     private String role;
     private Double wage;
+    private boolean paymentDone = false; // ✅ add this field
+
 
     @ManyToOne
     @JoinColumn(name = "investment_id")
@@ -30,6 +32,12 @@ public class Worker {
     public Double getWage() { return wage; }
     public void setWage(Double wage) { this.wage = wage; }
 
+    public boolean isPaymentDone() { return paymentDone; } // ✅ getter
+    public void setPaymentDone(boolean paymentDone) { this.paymentDone = paymentDone; } // ✅ setter
+
     public Investment getInvestment() { return investment; }
     public void setInvestment(Investment investment) { this.investment = investment; }
+
+    public Boolean getPaymentDone() { return paymentDone; }
+//    public void setPaymentDone(Boolean paymentDone) { this.paymentDone = paymentDone; }
 }

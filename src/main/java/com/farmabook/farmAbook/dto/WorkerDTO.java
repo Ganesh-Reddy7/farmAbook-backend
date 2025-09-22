@@ -24,6 +24,8 @@ public class WorkerDTO {
     @NotNull(message = "Investment ID is required")
     private Long investmentId;
 
+    private boolean paymentDone = false;
+
     public Long getId() {
         return id;
     }
@@ -63,4 +65,8 @@ public class WorkerDTO {
     public void setInvestmentId(Long investmentId) {
         this.investmentId = investmentId;
     }
+
+    public boolean isPaymentDone() { return paymentDone; }
+
+    public void setPaymentDone(boolean paymentDone) { this.paymentDone = paymentDone; }
 }
