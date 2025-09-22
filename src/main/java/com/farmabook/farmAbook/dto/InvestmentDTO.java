@@ -26,6 +26,9 @@ public class InvestmentDTO {
 
     private Double remainingAmount; // ✅ new field
 
+    private Long cropId;          // ✅ add cropId
+    private CropDTO crop;
+
 
     public Long getId() {
         return id;
@@ -70,4 +73,10 @@ public class InvestmentDTO {
     public Double getRemainingAmount() { return remainingAmount; }
 
     public void setRemainingAmount(Double remainingAmount) { this.remainingAmount = remainingAmount; }
+
+    public Long getCropId() { return cropId; }       // ✅ getter
+    public void setCropId(Long cropId) { this.cropId = cropId; } // ✅ setter
+
+    public CropDTO getCrop() { return crop; }
+    public void setCrop(CropDTO crop) { this.crop = crop; }     // ✅ setter
 }

@@ -2,6 +2,7 @@ package com.farmabook.farmAbook.controller;
 
 import com.farmabook.farmAbook.dto.InvestmentDTO;
 import com.farmabook.farmAbook.dto.InvestmentWorkerDTO;
+import com.farmabook.farmAbook.dto.YearlyInvestmentSummaryDTO;
 import com.farmabook.farmAbook.service.InvestmentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -58,5 +59,29 @@ public class InvestmentController {
     public ResponseEntity<List<InvestmentDTO>> getInvestmentsByFinancialYear(@PathVariable int year) {
         return ResponseEntity.ok(investmentService.getInvestmentsByFinancialYear(year));
     }
+
+    @GetMapping("/financial-year/{year}/flex")
+    public ResponseEntity<List<?>> getInvestmentsByFinancialYearFlex(
+            @PathVariable int year,
+            @RequestParam(defaultValue = "false") boolean includeWorkers,
+            @RequestParam(required = false) Long farmerId) {
+
+        return ResponseEntity.ok(
+                investmentService.getInvestmentsByFinancialYearwithWorkers(year, includeWorkers, farmerId)
+        );
+    }
+
+    @GetMapping("/financial-year/range/summary/{farmerId}")
+    public ResponseEntity<List<YearlyInvestmentSummaryDTO>> getYearlySummaryForFarmer(
+            @PathVariable Long farmerId,
+            @RequestParam int startYear,
+            @RequestParam int endYear) {
+
+        return ResponseEntity.ok(
+                investmentService.getYearlySummaryForFarmer(farmerId, startYear, endYear)
+        );
+    }
+
+
 
 }

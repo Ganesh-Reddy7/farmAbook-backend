@@ -26,6 +26,14 @@ public class Investment {
 
     @OneToMany(mappedBy = "investment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReturnEntry> returnEntries;
+    @ManyToOne
+    @JoinColumn(name = "crop_id")
+    private Crop crop;
+
+    // Getter & Setter
+    public Crop getCrop() { return crop; }
+    public void setCrop(Crop crop) { this.crop = crop; }
+
 
     // Getters & Setters
     public Long getId() { return id; }
