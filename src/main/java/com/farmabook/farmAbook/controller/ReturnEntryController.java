@@ -20,9 +20,14 @@ public class ReturnEntryController {
     }
 
     @PostMapping
-    public ResponseEntity<ReturnEntryDTO> createReturn(@Valid @RequestBody ReturnEntryDTO returnEntryDTO) {
-        ReturnEntryDTO created = returnEntryService.createReturn(returnEntryDTO);
+    public ResponseEntity<ReturnEntryDTO> createReturn(@RequestBody ReturnEntryDTO dto) {
+        ReturnEntryDTO created = returnEntryService.createReturn(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @GetMapping("/crop/{cropId}")
+    public List<ReturnEntryDTO> getReturnsByCrop(@PathVariable Long cropId) {
+        return returnEntryService.getReturnsByCrop(cropId);
     }
 
     @GetMapping

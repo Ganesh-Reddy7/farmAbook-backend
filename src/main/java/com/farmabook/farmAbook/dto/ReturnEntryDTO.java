@@ -26,6 +26,9 @@ public class ReturnEntryDTO {
 //    @NotNull(message = "Farmer ID is required")
     private Long farmerId;
 
+    private Long cropId;
+
+
     public Long getId() {
         return id;
     }
@@ -72,5 +75,13 @@ public class ReturnEntryDTO {
 
     public void setFarmerId(Long farmerId) {
         this.farmerId = farmerId;
+    }
+
+    public Long getCropId() {
+        return cropId;
+    }
+
+    public void setCropId(Long date) {
+        this.cropId = cropId;
     }
 }

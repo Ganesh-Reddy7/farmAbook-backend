@@ -57,4 +57,7 @@ public class Crop {
 
     public List<Investment> getInvestments() { return investments; }
     public void setInvestments(List<Investment> investments) { this.investments = investments; }
+
+    public List<ReturnEntry> getReturnEntries() { return returnEntries; }
+    public void setReturnEntries(List<ReturnEntry> returnEntries) { this.returnEntries = returnEntries; }
 }

@@ -29,7 +29,8 @@ public class ReturnEntry {
     public Crop getCrop() { return crop; }
     public void setCrop(Crop crop) { this.crop = crop; }
 
-
+    public Farmer getFarmer() { return farmer; }
+    public void setFarmer(Farmer farmer) { this.farmer = farmer; }
     // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

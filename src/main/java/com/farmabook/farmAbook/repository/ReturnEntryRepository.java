@@ -15,4 +15,7 @@ public interface ReturnEntryRepository extends JpaRepository<ReturnEntry, Long> 
 
     List<ReturnEntry> findByInvestmentFarmerIdAndDateBetween(Long farmerId, LocalDate startDate, LocalDate endDate);
 
+    List<ReturnEntry> findByFarmerId(Long farmerId);
+    List<ReturnEntry> findByCropId(Long cropId);
+
 }

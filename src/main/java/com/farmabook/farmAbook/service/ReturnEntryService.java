@@ -3,9 +3,13 @@ package com.farmabook.farmAbook.service;
 import com.farmabook.farmAbook.dto.ReturnEntryDTO;
 import com.farmabook.farmAbook.entity.Investment;
 import com.farmabook.farmAbook.entity.ReturnEntry;
+import com.farmabook.farmAbook.entity.Farmer;
+import com.farmabook.farmAbook.entity.Crop;
 import com.farmabook.farmAbook.exception.ResourceNotFoundException;
 import com.farmabook.farmAbook.repository.InvestmentRepository;
 import com.farmabook.farmAbook.repository.ReturnEntryRepository;
+import com.farmabook.farmAbook.repository.CropRepository;
+import com.farmabook.farmAbook.repository.FarmerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
@@ -25,6 +29,12 @@ public class ReturnEntryService {
 
     @Autowired
     private InvestmentRepository investmentRepository;
+
+    @Autowired
+    private FarmerRepository farmerRepository;
+
+    @Autowired
+    private CropRepository cropRepository;
 
     public ReturnEntryDTO createReturnEntry(ReturnEntryDTO dto) {
         Investment investment = investmentRepository.findById(dto.getInvestmentId())
@@ -62,21 +72,34 @@ public class ReturnEntryService {
 
         if (dto.getDate() != null && !dto.getDate().isBlank()) {
             try {
-                entry.setDate(LocalDate.parse(dto.getDate())); // expects "yyyy-MM-dd"
+                entry.setDate(LocalDate.parse(dto.getDate())); // expects yyyy-MM-dd
             } catch (DateTimeParseException ex) {
-                throw new IllegalArgumentException("Invalid date format for return.date. Expected yyyy-MM-dd");
+                throw new IllegalArgumentException("Invalid date format. Expected yyyy-MM-dd");
             }
         }
 
-        if (dto.getInvestmentId() != null) {
-            Investment inv = investmentRepository.findById(dto.getInvestmentId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Investment not found with id " + dto.getInvestmentId()));
-            entry.setInvestment(inv);
+        // Farmer is mandatory
+        Farmer farmer = farmerRepository.findById(dto.getFarmerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Farmer not found with id " + dto.getFarmerId()));
+        entry.setFarmer(farmer);
+
+        // Crop is optional
+        if (dto.getCropId() != null) {
+            Crop crop = cropRepository.findById(dto.getCropId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Crop not found with id " + dto.getCropId()));
+
+            // update both sides
+            entry.setCrop(crop);
+            crop.getReturnEntries().add(entry);
+
+            // update total returns
+            crop.setTotalReturns(crop.getTotalReturns() + dto.getAmount());
+
+            cropRepository.save(crop);
         }
 
         ReturnEntry saved = returnEntryRepository.save(entry);
-        dto.setId(saved.getId());
-        return dto;
+        return mapToDTO(saved);
     }
 
     // Get all (GET)
@@ -128,19 +151,13 @@ public class ReturnEntryService {
     }
 
     public List<ReturnEntryDTO> getReturnsByFarmerId(Long farmerId) {
-        // get all investments of this farmer
-        List<Investment> investments = investmentRepository.findByFarmerId(farmerId);
+        return returnEntryRepository.findByFarmerId(farmerId)
+                .stream().map(this::mapToDTO).collect(Collectors.toList());
+    }
 
-        // collect all returns for those investments
-        List<ReturnEntry> returns = new ArrayList<>();
-        for (Investment inv : investments) {
-            returns.addAll(returnEntryRepository.findByInvestmentId(inv.getId()));
-        }
-
-        // map to DTOs
-        return returns.stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+    public List<ReturnEntryDTO> getReturnsByCrop(Long cropId) {
+        return returnEntryRepository.findByCropId(cropId)
+                .stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
     public ReturnEntryDTO createReturnForFarmer(Long farmerId, ReturnEntryDTO dto) {
@@ -179,12 +196,14 @@ public class ReturnEntryService {
     }
 
 
-    private ReturnEntryDTO mapToDTO(ReturnEntry returnEntry) {
+    private ReturnEntryDTO mapToDTO(ReturnEntry entry) {
         ReturnEntryDTO dto = new ReturnEntryDTO();
-        dto.setId(returnEntry.getId());
-        dto.setAmount(returnEntry.getAmount());
-        dto.setDate(returnEntry.getDate().toString()); // assuming LocalDate → String
-        dto.setInvestmentId(returnEntry.getInvestment().getId());
+        dto.setId(entry.getId());
+        dto.setAmount(entry.getAmount());
+        dto.setDescription(entry.getDescription());
+        dto.setDate(entry.getDate() != null ? entry.getDate().toString() : null);
+        dto.setFarmerId(entry.getFarmer().getId());
+        dto.setCropId(entry.getCrop() != null ? entry.getCrop().getId() : null);
         return dto;
     }
 
