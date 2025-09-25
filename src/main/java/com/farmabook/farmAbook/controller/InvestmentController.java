@@ -82,6 +82,21 @@ public class InvestmentController {
         );
     }
 
+    @PostMapping("/crop/investments-by-year")
+    public ResponseEntity<List<InvestmentDTO>> getInvestmentsByCropAndYear(@RequestParam Long farmerId,
+                                                                           @RequestParam Long cropId,
+                                                                           @RequestParam int year) {
+        // extend your request DTO to include cropId also
+        return ResponseEntity.ok(
+                investmentService.getInvestmentsByCropAndFarmerAndYear(
+                        cropId, farmerId, year
+                )
+        );
+    }
 
+    @GetMapping("/crop/{cropId}")
+    public ResponseEntity<List<InvestmentDTO>> getInvestmentsByCrop(@PathVariable Long cropId) {
+        return ResponseEntity.ok(investmentService.getInvestmentsByCrop(cropId));
+    }
 
 }

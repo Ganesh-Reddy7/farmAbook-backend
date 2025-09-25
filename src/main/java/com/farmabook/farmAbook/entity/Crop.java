@@ -18,7 +18,9 @@ public class Crop {
 
     private Double totalInvestment = 0.0;    // Total investment for this crop
     private Double remainingInvestment = 0.0; // Unpaid amount for workers
-    private Double totalReturns = 0.0;        // Total returns for this crop
+    private Double totalReturns = 0.0;
+    private Double totalProduction = 0.0;   // NEW → production (yield) for this crop
+// Total returns for this crop
 
     @ManyToOne
     @JoinColumn(name = "farmer_id")
@@ -60,4 +62,7 @@ public class Crop {
 
     public List<ReturnEntry> getReturnEntries() { return returnEntries; }
     public void setReturnEntries(List<ReturnEntry> returnEntries) { this.returnEntries = returnEntries; }
+
+    public Double getTotalProduction() { return totalProduction; }
+    public void setTotalProduction(Double totalProduction) { this.totalProduction = totalProduction; }
 }

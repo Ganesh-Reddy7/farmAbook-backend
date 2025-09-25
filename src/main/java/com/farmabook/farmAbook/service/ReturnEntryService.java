@@ -12,18 +12,17 @@ import com.farmabook.farmAbook.repository.CropRepository;
 import com.farmabook.farmAbook.repository.FarmerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-
-
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Comparator;
-
 
 @Service
 public class ReturnEntryService {
+
     @Autowired
     private ReturnEntryRepository returnEntryRepository;
 
@@ -36,39 +35,34 @@ public class ReturnEntryService {
     @Autowired
     private CropRepository cropRepository;
 
+    // --- Create return linked directly to an investment ---
     public ReturnEntryDTO createReturnEntry(ReturnEntryDTO dto) {
         Investment investment = investmentRepository.findById(dto.getInvestmentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Investment not found with id " + dto.getInvestmentId()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Investment not found with id " + dto.getInvestmentId()));
 
         ReturnEntry entry = new ReturnEntry();
         entry.setAmount(dto.getAmount());
-        entry.setDate(LocalDate.parse(dto.getDate()));
+        entry.setQuantity(dto.getQuantity());
         entry.setDescription(dto.getDescription());
         entry.setInvestment(investment);
 
+        if (dto.getDate() != null && !dto.getDate().isBlank()) {
+            entry.setDate(LocalDate.parse(dto.getDate()));
+        } else {
+            entry.setDate(LocalDate.now());
+        }
+
         ReturnEntry saved = returnEntryRepository.save(entry);
-        dto.setId(saved.getId());
-        return dto;
+        return mapToDTO(saved);
     }
 
-//    public List<ReturnEntryDTO> getReturnsByInvestment(Long investmentId) {
-//        return returnEntryRepository.findByInvestmentId(investmentId)
-//                .stream()
-//                .map(r -> {
-//                    ReturnEntryDTO dto = new ReturnEntryDTO();
-//                    dto.setId(r.getId());
-//                    dto.setAmount(r.getAmount());
-//                    dto.setDate(r.getDate());
-//                    dto.setDescription(r.getDescription());
-//                    dto.setInvestmentId(r.getInvestment().getId());
-//                    return dto;
-//                }).collect(Collectors.toList());
-//    }
-
+    // --- Create return linked to farmer & optional crop ---
     public ReturnEntryDTO createReturn(ReturnEntryDTO dto) {
         ReturnEntry entry = new ReturnEntry();
         entry.setAmount(dto.getAmount());
         entry.setDescription(dto.getDescription());
+        entry.setQuantity(dto.getQuantity());
 
         if (dto.getDate() != null && !dto.getDate().isBlank()) {
             try {
@@ -76,24 +70,38 @@ public class ReturnEntryService {
             } catch (DateTimeParseException ex) {
                 throw new IllegalArgumentException("Invalid date format. Expected yyyy-MM-dd");
             }
+        } else {
+            entry.setDate(LocalDate.now());
         }
 
         // Farmer is mandatory
         Farmer farmer = farmerRepository.findById(dto.getFarmerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Farmer not found with id " + dto.getFarmerId()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Farmer not found with id " + dto.getFarmerId()));
         entry.setFarmer(farmer);
 
         // Crop is optional
         if (dto.getCropId() != null) {
             Crop crop = cropRepository.findById(dto.getCropId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Crop not found with id " + dto.getCropId()));
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Crop not found with id " + dto.getCropId()));
 
-            // update both sides
             entry.setCrop(crop);
+
+            if (crop.getReturnEntries() == null) {
+                crop.setReturnEntries(new ArrayList<>());
+            }
             crop.getReturnEntries().add(entry);
 
             // update total returns
-            crop.setTotalReturns(crop.getTotalReturns() + dto.getAmount());
+            double newTotalReturns = (crop.getTotalReturns() != null ? crop.getTotalReturns() : 0.0)
+                    + (dto.getAmount() != null ? dto.getAmount() : 0.0);
+            crop.setTotalReturns(newTotalReturns);
+
+            // update total production
+            double newTotalProduction = (crop.getTotalProduction() != null ? crop.getTotalProduction() : 0.0)
+                    + (dto.getQuantity() != null ? dto.getQuantity() : 0.0);
+            crop.setTotalProduction(newTotalProduction);
 
             cropRepository.save(crop);
         }
@@ -102,34 +110,21 @@ public class ReturnEntryService {
         return mapToDTO(saved);
     }
 
-    // Get all (GET)
+    // --- Get all ---
     public List<ReturnEntryDTO> getAllReturns() {
-        return returnEntryRepository.findAll().stream().map(entry -> {
-            ReturnEntryDTO d = new ReturnEntryDTO();
-            d.setId(entry.getId());
-            d.setAmount(entry.getAmount());
-            d.setDescription(entry.getDescription());
-            d.setDate(entry.getDate() != null ? entry.getDate().toString() : null);
-            d.setInvestmentId(entry.getInvestment() != null ? entry.getInvestment().getId() : null);
-            return d;
-        }).collect(Collectors.toList());
+        return returnEntryRepository.findAll().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
     }
 
-    // Get by ID (GET /{id})
+    // --- Get by ID ---
     public ReturnEntryDTO getReturnById(Long id) {
         ReturnEntry entry = returnEntryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Return entry not found with id " + id));
-
-        ReturnEntryDTO d = new ReturnEntryDTO();
-        d.setId(entry.getId());
-        d.setAmount(entry.getAmount());
-        d.setDescription(entry.getDescription());
-        d.setDate(entry.getDate() != null ? entry.getDate().toString() : null);
-        d.setInvestmentId(entry.getInvestment() != null ? entry.getInvestment().getId() : null);
-        return d;
+        return mapToDTO(entry);
     }
 
-    // Delete (DELETE)
+    // --- Delete ---
     public void deleteReturn(Long id) {
         if (!returnEntryRepository.existsById(id)) {
             throw new ResourceNotFoundException("Return entry not found with id " + id);
@@ -137,75 +132,85 @@ public class ReturnEntryService {
         returnEntryRepository.deleteById(id);
     }
 
-    // Optional: returns by investment
+    // --- By investment ---
     public List<ReturnEntryDTO> getReturnsByInvestment(Long investmentId) {
-        return returnEntryRepository.findByInvestmentId(investmentId).stream().map(entry -> {
-            ReturnEntryDTO d = new ReturnEntryDTO();
-            d.setId(entry.getId());
-            d.setAmount(entry.getAmount());
-            d.setDescription(entry.getDescription());
-            d.setDate(entry.getDate() != null ? entry.getDate().toString() : null);
-            d.setInvestmentId(entry.getInvestment() != null ? entry.getInvestment().getId() : null);
-            return d;
-        }).collect(Collectors.toList());
+        return returnEntryRepository.findByInvestmentId(investmentId).stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
     }
 
+    // --- By farmer ---
     public List<ReturnEntryDTO> getReturnsByFarmerId(Long farmerId) {
         return returnEntryRepository.findByFarmerId(farmerId)
                 .stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
+    // --- By crop ---
     public List<ReturnEntryDTO> getReturnsByCrop(Long cropId) {
         return returnEntryRepository.findByCropId(cropId)
                 .stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
+    // --- Create return for farmer (auto-links to latest investment) ---
     public ReturnEntryDTO createReturnForFarmer(Long farmerId, ReturnEntryDTO dto) {
-        // get latest investment for this farmer (based on investment.date)
         Investment latestInvestment = investmentRepository.findByFarmerId(farmerId)
                 .stream()
                 .max(Comparator.comparing(Investment::getDate))
-                .orElseThrow(() -> new IllegalArgumentException("No investments found for farmer with id " + farmerId));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No investments found for farmer with id " + farmerId));
 
         ReturnEntry entry = new ReturnEntry();
         entry.setAmount(dto.getAmount());
+        entry.setQuantity(dto.getQuantity());
         entry.setDescription(dto.getDescription());
 
         if (dto.getDate() != null && !dto.getDate().isBlank()) {
-            try {
-                entry.setDate(LocalDate.parse(dto.getDate())); // expects yyyy-MM-dd
-            } catch (DateTimeParseException ex) {
-                throw new IllegalArgumentException("Invalid date format for return.date. Expected yyyy-MM-dd");
-            }
+            entry.setDate(LocalDate.parse(dto.getDate()));
+        } else {
+            entry.setDate(LocalDate.now());
         }
 
         // Link return to the chosen investment
         entry.setInvestment(latestInvestment);
+        entry.setFarmer(latestInvestment.getFarmer());
+
+        // Crop optional in this flow too
+        if (dto.getCropId() != null) {
+            Crop crop = cropRepository.findById(dto.getCropId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Crop not found with id " + dto.getCropId()));
+
+            entry.setCrop(crop);
+
+            if (crop.getReturnEntries() == null) {
+                crop.setReturnEntries(new ArrayList<>());
+            }
+            crop.getReturnEntries().add(entry);
+
+            // update totals
+            crop.setTotalReturns((crop.getTotalReturns() != null ? crop.getTotalReturns() : 0.0)
+                    + (dto.getAmount() != null ? dto.getAmount() : 0.0));
+            crop.setTotalProduction((crop.getTotalProduction() != null ? crop.getTotalProduction() : 0.0)
+                    + (dto.getQuantity() != null ? dto.getQuantity() : 0.0));
+
+            cropRepository.save(crop);
+        }
 
         ReturnEntry saved = returnEntryRepository.save(entry);
-
-        // map back to DTO
-        ReturnEntryDTO res = new ReturnEntryDTO();
-        res.setId(saved.getId());
-        res.setAmount(saved.getAmount());
-        res.setDescription(saved.getDescription());
-        res.setDate(saved.getDate() != null ? saved.getDate().toString() : null);
-        res.setInvestmentId(latestInvestment.getId());
-        res.setFarmerId(latestInvestment.getFarmer().getId()); // derive farmerId from investment
-        return res;
+        return mapToDTO(saved);
     }
 
-
+    // --- Mapper ---
     private ReturnEntryDTO mapToDTO(ReturnEntry entry) {
         ReturnEntryDTO dto = new ReturnEntryDTO();
         dto.setId(entry.getId());
         dto.setAmount(entry.getAmount());
+        dto.setQuantity(entry.getQuantity());
         dto.setDescription(entry.getDescription());
         dto.setDate(entry.getDate() != null ? entry.getDate().toString() : null);
-        dto.setFarmerId(entry.getFarmer().getId());
+        dto.setFarmerId(entry.getFarmer() != null ? entry.getFarmer().getId() : null);
         dto.setCropId(entry.getCrop() != null ? entry.getCrop().getId() : null);
+        dto.setInvestmentId(entry.getInvestment() != null ? entry.getInvestment().getId() : null);
         return dto;
     }
-
-
 }

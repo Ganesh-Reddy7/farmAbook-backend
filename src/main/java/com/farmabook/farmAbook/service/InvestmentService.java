@@ -156,6 +156,24 @@ public class InvestmentService {
         }
     }
 
+    public List<InvestmentDTO> getInvestmentsByCrop(Long cropId) {
+        return investmentRepository.findByCropId(cropId)
+                .stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<InvestmentDTO> getInvestmentsByCropAndFarmerAndYear(Long cropId, Long farmerId, int year) {
+        LocalDate start = LocalDate.of(year, 5, 1);     // FY start (April 1)
+        LocalDate end = LocalDate.of(year + 1, 4, 31);  // FY end (March 31 next year)
+
+        return investmentRepository.findByCropIdAndFarmerIdAndDateBetween(cropId, farmerId, start, end)
+                .stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+
     // ------------------ HELPERS ------------------ //
 
     private InvestmentDTO mapToDTO(Investment inv) {

@@ -27,6 +27,7 @@ public class ReturnEntryDTO {
     private Long farmerId;
 
     private Long cropId;
+    private Double quantity;   // NEW: production for this return
 
 
     public Long getId() {
@@ -84,4 +85,7 @@ public class ReturnEntryDTO {
     public void setCropId(Long date) {
         this.cropId = cropId;
     }
+
+    public Double getQuantity() { return quantity; }
+    public void setQuantity(Double quantity) { this.quantity = quantity; }
 }

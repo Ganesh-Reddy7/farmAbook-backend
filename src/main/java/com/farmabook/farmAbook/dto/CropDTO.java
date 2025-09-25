@@ -22,6 +22,8 @@ public class CropDTO {
     private Double totalInvestment;
     private Double remainingInvestment;
     private Double totalReturns;
+    private Double totalProduction;   // NEW
+
 
     // Optional: list of investments under this crop
     private List<InvestmentDTO> investments;
@@ -53,4 +55,7 @@ public class CropDTO {
 
     public List<InvestmentDTO> getInvestments() { return investments; }
     public void setInvestments(List<InvestmentDTO> investments) { this.investments = investments; }
+
+    public Double getTotalProduction() { return totalProduction; }
+    public void setTotalProduction(Double totalProduction) { this.totalProduction = totalProduction; }
 }
