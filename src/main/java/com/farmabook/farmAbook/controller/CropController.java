@@ -1,6 +1,7 @@
 package com.farmabook.farmAbook.controller;
 
 import com.farmabook.farmAbook.dto.CropDTO;
+import com.farmabook.farmAbook.dto.CropReturnsDTO;
 import com.farmabook.farmAbook.service.CropService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -58,5 +59,14 @@ public class CropController {
         List<CropDTO> crops = cropService.getCropsDropdownByFinancialYear(farmerId, year);
         return ResponseEntity.ok(crops);
     }
+
+    @GetMapping("/{farmerId}/crops/returns")
+    public ResponseEntity<List<CropReturnsDTO>> getCropsReturns(
+            @PathVariable Long farmerId,
+            @RequestParam int year) {
+        List<CropReturnsDTO> result = cropService.getCropsWithReturnsForFinancialYear(farmerId, year);
+        return ResponseEntity.ok(result);
+    }
+
 
 }

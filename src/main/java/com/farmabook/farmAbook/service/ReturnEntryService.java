@@ -12,6 +12,7 @@ import com.farmabook.farmAbook.repository.CropRepository;
 import com.farmabook.farmAbook.repository.FarmerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class ReturnEntryService {
 
     @Autowired
@@ -64,12 +66,9 @@ public class ReturnEntryService {
         entry.setDescription(dto.getDescription());
         entry.setQuantity(dto.getQuantity());
 
+        // Date handling
         if (dto.getDate() != null && !dto.getDate().isBlank()) {
-            try {
-                entry.setDate(LocalDate.parse(dto.getDate())); // expects yyyy-MM-dd
-            } catch (DateTimeParseException ex) {
-                throw new IllegalArgumentException("Invalid date format. Expected yyyy-MM-dd");
-            }
+            entry.setDate(LocalDate.parse(dto.getDate())); // expects yyyy-MM-dd
         } else {
             entry.setDate(LocalDate.now());
         }
@@ -88,27 +87,47 @@ public class ReturnEntryService {
 
             entry.setCrop(crop);
 
-            if (crop.getReturnEntries() == null) {
-                crop.setReturnEntries(new ArrayList<>());
-            }
-            crop.getReturnEntries().add(entry);
-
-            // update total returns
-            double newTotalReturns = (crop.getTotalReturns() != null ? crop.getTotalReturns() : 0.0)
-                    + (dto.getAmount() != null ? dto.getAmount() : 0.0);
+            // ✅ increment totals directly
+            double newTotalReturns =
+                    (crop.getTotalReturns() != null ? crop.getTotalReturns() : 0.0)
+                            + (dto.getAmount() != null ? dto.getAmount() : 0.0);
             crop.setTotalReturns(newTotalReturns);
 
-            // update total production
-            double newTotalProduction = (crop.getTotalProduction() != null ? crop.getTotalProduction() : 0.0)
-                    + (dto.getQuantity() != null ? dto.getQuantity() : 0.0);
+            double newTotalProduction =
+                    (crop.getTotalProduction() != null ? crop.getTotalProduction() : 0.0)
+                            + (dto.getQuantity() != null ? dto.getQuantity() : 0.0);
             crop.setTotalProduction(newTotalProduction);
 
-            cropRepository.save(crop);
+            // 🔥 Debug print
+            System.out.println("Crop " + crop.getId() + " updated: " +
+                    "totalReturns=" + newTotalReturns +
+                    ", totalProduction=" + newTotalProduction);
         }
-
         ReturnEntry saved = returnEntryRepository.save(entry);
+
         return mapToDTO(saved);
     }
+
+
+//    private void updateCropTotals(Crop crop) {
+//        Double totalReturns = returnEntryRepository
+//                .findAllByCropId(crop.getId())
+//                .stream()
+//                .mapToDouble(r -> r.getAmount() != null ? r.getAmount() : 0.0)
+//                .sum();
+//
+//        Double totalProduction = returnEntryRepository
+//                .findAllByCropId(crop.getId())
+//                .stream()
+//                .mapToDouble(r -> r.getQuantity() != null ? r.getQuantity() : 0.0)
+//                .sum();
+//
+//        crop.setTotalReturns(totalReturns);
+//        crop.setTotalProduction(totalProduction);
+//        cropRepository.save(crop);
+//    }
+
+
 
     // --- Get all ---
     public List<ReturnEntryDTO> getAllReturns() {
@@ -198,6 +217,20 @@ public class ReturnEntryService {
 
         ReturnEntry saved = returnEntryRepository.save(entry);
         return mapToDTO(saved);
+    }
+
+    public List<ReturnEntryDTO> getReturnsByCropAndFarmerForFinancialYear(
+            Long cropId, Long farmerId, int year) {
+
+        // Financial year from May (year) to April (year+1)
+        LocalDate startDate = LocalDate.of(year, 5, 1);
+        LocalDate endDate = LocalDate.of(year + 1, 4, 30);
+
+        List<ReturnEntry> entries = returnEntryRepository.findByCropIdAndFarmerIdAndDateBetween(cropId, farmerId, startDate, endDate);
+
+        return entries.stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
     // --- Mapper ---

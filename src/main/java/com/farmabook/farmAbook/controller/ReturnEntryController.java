@@ -25,10 +25,15 @@ public class ReturnEntryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @GetMapping("/crop/{cropId}")
-    public List<ReturnEntryDTO> getReturnsByCrop(@PathVariable Long cropId) {
-        return returnEntryService.getReturnsByCrop(cropId);
+    @GetMapping("/farmer/{farmerId}/crop/{cropId}/returns")
+    public List<ReturnEntryDTO> getReturnsByCropAndFarmerForYear(
+            @PathVariable Long farmerId,
+            @PathVariable Long cropId,
+            @RequestParam int year) {
+
+        return returnEntryService.getReturnsByCropAndFarmerForFinancialYear(cropId, farmerId, year);
     }
+
 
     @GetMapping
     public ResponseEntity<List<ReturnEntryDTO>> getAllReturns() {

@@ -82,7 +82,7 @@ public class ReturnEntryDTO {
         return cropId;
     }
 
-    public void setCropId(Long date) {
+    public void setCropId(Long cropId) {
         this.cropId = cropId;
     }
 

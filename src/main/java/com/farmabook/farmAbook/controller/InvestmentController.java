@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/investments")
@@ -83,16 +84,20 @@ public class InvestmentController {
     }
 
     @PostMapping("/crop/investments-by-year")
-    public ResponseEntity<List<InvestmentDTO>> getInvestmentsByCropAndYear(@RequestParam Long farmerId,
-                                                                           @RequestParam Long cropId,
-                                                                           @RequestParam int year) {
-        // extend your request DTO to include cropId also
+    public ResponseEntity<List<InvestmentDTO>> getInvestmentsByCropAndYear(
+            @RequestBody Map<String, Object> request) {
+
+        Long farmerId = ((Number) request.get("farmerId")).longValue();
+        Long cropId = ((Number) request.get("cropId")).longValue();
+        int year = (Integer) request.get("year");
+
         return ResponseEntity.ok(
                 investmentService.getInvestmentsByCropAndFarmerAndYear(
                         cropId, farmerId, year
                 )
         );
     }
+
 
     @GetMapping("/crop/{cropId}")
     public ResponseEntity<List<InvestmentDTO>> getInvestmentsByCrop(@PathVariable Long cropId) {
