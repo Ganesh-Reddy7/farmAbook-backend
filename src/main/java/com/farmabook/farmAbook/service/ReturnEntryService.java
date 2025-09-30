@@ -1,6 +1,7 @@
 package com.farmabook.farmAbook.service;
 
 import com.farmabook.farmAbook.dto.ReturnEntryDTO;
+import com.farmabook.farmAbook.dto.YearlyInvestmentSummaryDTO;
 import com.farmabook.farmAbook.entity.Investment;
 import com.farmabook.farmAbook.entity.ReturnEntry;
 import com.farmabook.farmAbook.entity.Farmer;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Collections;
 
 @Service
 @Transactional
@@ -231,6 +233,35 @@ public class ReturnEntryService {
         return entries.stream()
                 .map(this::mapToDTO)
                 .toList();
+    }
+
+    public List<YearlyInvestmentSummaryDTO> getYearlyReturns(Long farmerId, int lastNYears) {
+        List<YearlyInvestmentSummaryDTO> results = new ArrayList<>();
+        int currentYear = LocalDate.now().getYear();
+
+        for (int i = 0; i < lastNYears; i++) {
+            int year = currentYear - i;
+
+            // Financial year: May (year) → April (year+1)
+            LocalDate start = LocalDate.of(year, 5, 1);
+            LocalDate end = LocalDate.of(year + 1, 4, 30);
+
+            List<ReturnEntry> entries = returnEntryRepository
+                    .findByFarmerIdAndDateBetween(farmerId, start, end);
+
+            double totalAmount = entries.stream()
+                    .mapToDouble(e -> e.getAmount() != null ? e.getAmount() : 0)
+                    .sum();
+
+            double totalQuantity = entries.stream()
+                    .mapToDouble(e -> e.getQuantity() != null ? e.getQuantity() : 0)
+                    .sum();
+
+            results.add(new YearlyInvestmentSummaryDTO(year, totalAmount));
+        }
+
+        Collections.reverse(results);
+        return results;
     }
 
     // --- Mapper ---

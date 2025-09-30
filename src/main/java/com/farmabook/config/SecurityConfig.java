@@ -40,8 +40,11 @@ public class SecurityConfig {
                                 "/api/users/register",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-resources/**"
+                                "/swagger-ui.html",
+                                "/swagger-resources/**",
+                                "/webjars/**"
                         ).permitAll()
+
                         // Everything else requires JWT
                         .anyRequest().authenticated()
                 );

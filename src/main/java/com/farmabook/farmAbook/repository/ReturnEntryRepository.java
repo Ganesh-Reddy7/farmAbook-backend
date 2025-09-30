@@ -23,4 +23,9 @@ public interface ReturnEntryRepository extends JpaRepository<ReturnEntry, Long> 
             LocalDate startDate,
             LocalDate endDate
     );
+    List<ReturnEntry> findByFarmerIdAndDateBetween(
+            Long farmerId,
+            LocalDate startDate,
+            LocalDate endDate
+    );
 }

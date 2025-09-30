@@ -17,6 +17,7 @@ public class OpenApiConfig {
     public OpenAPI farmAbookApi() {
         // Define JWT Bearer security scheme
         SecurityScheme bearerAuthScheme = new SecurityScheme()
+                .name("Authorization")
                 .type(SecurityScheme.Type.HTTP)
                 .scheme("bearer")
                 .bearerFormat("JWT");

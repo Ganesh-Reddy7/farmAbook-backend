@@ -6,7 +6,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.farmabook.farmAbook.dto.YearlyInvestmentSummaryDTO;
 import java.util.List;
 
 @RestController
@@ -70,4 +70,11 @@ public class ReturnEntryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @GetMapping("/farmer/{farmerId}/returns/yearly")
+    public List<YearlyInvestmentSummaryDTO> getYearlyReturns(
+            @PathVariable Long farmerId,
+            @RequestParam(defaultValue = "5") int lastYears) {
+
+        return returnEntryService.getYearlyReturns(farmerId, lastYears);
+    }
 }

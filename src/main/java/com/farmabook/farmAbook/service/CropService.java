@@ -2,16 +2,26 @@ package com.farmabook.farmAbook.service;
 
 import com.farmabook.farmAbook.dto.CropDTO;
 import com.farmabook.farmAbook.dto.CropReturnsDTO;
+import com.farmabook.farmAbook.dto.CropPerformanceDTO;
+import com.farmabook.farmAbook.dto.CropPerformanceReportDTO;
 import com.farmabook.farmAbook.entity.Crop;
 import com.farmabook.farmAbook.entity.Farmer;
+import com.farmabook.farmAbook.entity.Investment;
+import com.farmabook.farmAbook.entity.ReturnEntry;
 import com.farmabook.farmAbook.exception.ResourceNotFoundException;
 import com.farmabook.farmAbook.repository.CropRepository;
 import com.farmabook.farmAbook.repository.FarmerRepository;
+import com.farmabook.farmAbook.repository.InvestmentRepository;
+import com.farmabook.farmAbook.repository.ReturnEntryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,6 +32,11 @@ public class CropService {
 
     @Autowired
     private FarmerRepository farmerRepository;
+    @Autowired
+    private  InvestmentRepository investmentRepository;
+    @Autowired
+    private  ReturnEntryRepository returnEntryRepository;
+
 
     // Add new crop
     public CropDTO addCrop(CropDTO dto) {
@@ -72,7 +87,7 @@ public class CropService {
         LocalDate startDate = LocalDate.of(year, 5, 1);   // May 1
         LocalDate endDate = LocalDate.of(year + 1, 4, 30); // April 30
 
-        List<Crop> crops = cropRepository.findByFarmerId(farmerId);
+        List<Crop> crops = cropRepository.findByFarmerIdAndDateBetween(farmerId ,startDate , endDate);
 
         return crops.stream()
                 .map(crop -> {
@@ -129,6 +144,84 @@ public class CropService {
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    public CropPerformanceReportDTO getCropPerformance(Long farmerId, Integer year) {
+        LocalDate start;
+        LocalDate end;
+
+        if (year == null) {
+            // all time
+            start = LocalDate.of(1900, 1, 1);
+            end = LocalDate.now();
+        } else {
+            start = LocalDate.of(year, 5, 1);          // May 1st of given year
+            end = LocalDate.of(year + 1, 4, 30);       // Apr 30th next year
+        }
+
+        Map<Long, CropPerformanceDTO> map = new HashMap<>();
+
+        // 1) Aggregate investments
+        List<Investment> investments = investmentRepository.findByFarmerIdAndDateBetween(farmerId, start, end);
+        for (Investment inv : investments) {
+            Long cropId = inv.getCrop().getId();
+            String cropName = inv.getCrop().getName();
+
+            CropPerformanceDTO dto = map.getOrDefault(cropId,
+                    new CropPerformanceDTO(cropId, cropName, 0.0, 0.0, 0.0, 0.0));
+
+            dto.setTotalInvestment(dto.getTotalInvestment() +
+                    (inv.getAmount() != null ? inv.getAmount() : 0.0));
+
+            map.put(cropId, dto);
+        }
+
+        // 2) Aggregate returns
+        List<ReturnEntry> returns = returnEntryRepository.findByFarmerIdAndDateBetween(farmerId, start, end);
+        for (ReturnEntry re : returns) {
+            Long cropId = re.getCrop().getId();
+            String cropName = re.getCrop().getName();
+
+            CropPerformanceDTO dto = map.getOrDefault(cropId,
+                    new CropPerformanceDTO(cropId, cropName, 0.0, 0.0, 0.0, 0.0));
+
+            dto.setTotalReturns(dto.getTotalReturns() +
+                    (re.getAmount() != null ? re.getAmount() : 0.0));
+            dto.setYield(dto.getYield() +
+                    (re.getQuantity() != null ? re.getQuantity() : 0.0));
+
+            map.put(cropId, dto);
+        }
+
+        // 3) Profit calculation
+        map.values().forEach(dto ->
+                dto.setProfit((dto.getTotalReturns() != null ? dto.getTotalReturns() : 0.0) -
+                        (dto.getTotalInvestment() != null ? dto.getTotalInvestment() : 0.0)));
+
+        List<CropPerformanceDTO> all = new ArrayList<>(map.values());
+
+        // 4) Top and low crops
+        List<CropPerformanceDTO> top = all.stream()
+                .sorted(Comparator.comparing(CropPerformanceDTO::getProfit).reversed())
+                .limit(5).collect(Collectors.toList());
+
+        List<CropPerformanceDTO> low = all.stream()
+                .sorted(Comparator.comparing(CropPerformanceDTO::getProfit))
+                .limit(5).collect(Collectors.toList());
+
+        // 5) Distribution (% of investment)
+        double totalInvestment = all.stream().mapToDouble(CropPerformanceDTO::getTotalInvestment).sum();
+        List<CropPerformanceDTO> distribution = all.stream()
+                .map(c -> new CropPerformanceDTO(
+                        c.getCropId(),
+                        c.getCropName(),
+                        totalInvestment == 0 ? 0.0 : (c.getTotalInvestment() / totalInvestment * 100),
+                        c.getTotalReturns(),
+                        c.getProfit(),
+                        c.getYield()))
+                .collect(Collectors.toList());
+
+        return new CropPerformanceReportDTO(top, low, distribution);
     }
 
     // Map Crop entity → DTO

@@ -1,10 +1,12 @@
 package com.farmabook.farmAbook.controller;
 
 import com.farmabook.farmAbook.dto.ReportRequestDTO;
+import com.farmabook.farmAbook.dto.YearlyReportDTO;
 import com.farmabook.farmAbook.dto.FarmerReportDTO;
 import com.farmabook.farmAbook.service.ReportService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 import java.time.LocalDate;
 
@@ -67,8 +69,8 @@ public class ReportController {
     @PostMapping("/farmer/yearly")
     public ResponseEntity<FarmerReportDTO> generateYearlyReport(@RequestParam Long farmerId,
                                                                 @RequestParam int year) {
-        LocalDate startDate = LocalDate.of(year, 1, 1);
-        LocalDate endDate = LocalDate.of(year, 12, 31);
+        LocalDate startDate = LocalDate.of(year, 5, 1);
+        LocalDate endDate = LocalDate.of(year+1, 4, 30);
 
         FarmerReportDTO report = reportService.generateFarmerReport(farmerId, startDate, endDate, "Year " + year);
         return ResponseEntity.ok(report);
@@ -110,5 +112,14 @@ public class ReportController {
         FarmerReportDTO report = reportService.generateFarmerReport(farmerId, startDate, endDate,
                 season.substring(0, 1).toUpperCase() + season.substring(1) + " " + year);
         return ResponseEntity.ok(report);
+    }
+
+    @GetMapping("/farmer/{farmerId}/overview")
+    public ResponseEntity<List<YearlyReportDTO>> getFarmerOverview(
+            @PathVariable Long farmerId,
+            @RequestParam(defaultValue = "5") int lastYears) {
+
+        List<YearlyReportDTO> data = reportService.getFarmerLastNYearsReport(farmerId, lastYears);
+        return ResponseEntity.ok(data);
     }
 }
