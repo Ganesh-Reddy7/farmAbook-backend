@@ -7,4 +7,5 @@ import java.util.List;
 public interface LoanRepository extends JpaRepository<LoanTransaction, Long> {
     List<LoanTransaction> findByFarmerId(Long farmerId);
     List<LoanTransaction> findByIsGiven(Boolean isGiven);
+    List<LoanTransaction> findByFarmerIdAndIsGiven(Long farmerId, Boolean isGiven);
 }

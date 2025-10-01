@@ -8,6 +8,7 @@ public class LoanTransactionDTO {
 
     private Long id;
     private Long farmerId;
+    private String source;
     private Double principal;
     private Double remainingPrincipal;
     private Double amountPaid;
@@ -19,9 +20,31 @@ public class LoanTransactionDTO {
     private Boolean isGiven;
     private String description;
     private String bondImagePath;
+    private Double updatedPrincipal;
+    private Double currentInterest;
+
+    // getter and setter
+    public Double getCurrentInterest() { return currentInterest; }
+    public void setCurrentInterest(Double currentInterest) { this.currentInterest = currentInterest; }
+
+
+    public Double getUpdatedPrincipal() {
+        return updatedPrincipal;
+    }
+
+    public void setUpdatedPrincipal(Double updatedPrincipal) {
+        this.updatedPrincipal = updatedPrincipal;
+    }
 
     // NEW: file upload
     private MultipartFile bondImageFile;
+
+    // 🔑 NEW FIELDS for maturity compounding
+    private Integer maturityPeriodYears;  // how often compounding happens (1 = yearly, 2 = every 2 years, etc.)
+    private LocalDate nextMaturityDate;   // next date when compounding applies
+    private Boolean nearMaturity;         // flag to notify UI (true if within 30 days of maturity)
+    private LocalDate lastCompoundedDate; // tracks last compounding
+
 
     // Getters and setters
     public Long getId() { return id; }
@@ -65,4 +88,30 @@ public class LoanTransactionDTO {
 
     public MultipartFile getBondImageFile() { return bondImageFile; }
     public void setBondImageFile(MultipartFile bondImageFile) { this.bondImageFile = bondImageFile; }
+
+    public Integer getMaturityPeriodYears() { return maturityPeriodYears; }
+    public void setMaturityPeriodYears(Integer maturityPeriodYears) { this.maturityPeriodYears = maturityPeriodYears; }
+
+    public LocalDate getNextMaturityDate() { return nextMaturityDate; }
+    public void setNextMaturityDate(LocalDate nextMaturityDate) { this.nextMaturityDate = nextMaturityDate; }
+
+    public Boolean getNearMaturity() { return nearMaturity; }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public void setNearMaturity(Boolean nearMaturity) { this.nearMaturity = nearMaturity; }
+
+    public LocalDate getLastCompoundedDate() {
+        return lastCompoundedDate;
+    }
+
+    public void setLastCompoundedDate(LocalDate lastCompoundedDate) {
+        this.lastCompoundedDate = lastCompoundedDate;
+    }
 }

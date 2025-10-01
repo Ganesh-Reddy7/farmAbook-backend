@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import com.farmabook.farmAbook.loan.entity.LoanPayment;
 
 @Entity
 public class LoanTransaction {
@@ -17,11 +16,11 @@ public class LoanTransaction {
     @ManyToOne
     @JoinColumn(name = "farmer_id")
     private Farmer farmer;
-
+    private String source;
     private Double principal;
     private Double remainingPrincipal;
     private Double amountPaid = 0.0;
-    private Double interestRate; // per day interest
+    private Double interestRate; // % per year/day depending on logic
     private LocalDate startDate;
     private LocalDate endDate;
     private Double finalInterest;
@@ -29,11 +28,19 @@ public class LoanTransaction {
     private Boolean isGiven; // true = lent, false = borrowed
     private String description;
     private String bondImagePath;
+    private Double updatedPrincipal;
+    private LocalDate lastCompoundedDate; // tracks last compounding
+
+
+    // 🔑 Maturity compounding fields
+    private Integer maturityPeriodYears;  // e.g., 1 = yearly, 2 = every 2 years
+    private LocalDate nextMaturityDate;   // date when compounding applies
+    private Boolean nearMaturity = false; // flag to notify farmer before maturity
 
     @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LoanPayment> payments = new ArrayList<>();
 
-    // Getters and setters
+    // ----------------- Getters and Setters -----------------
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -75,4 +82,38 @@ public class LoanTransaction {
 
     public List<LoanPayment> getPayments() { return payments; }
     public void setPayments(List<LoanPayment> payments) { this.payments = payments; }
+
+    public Integer getMaturityPeriodYears() { return maturityPeriodYears; }
+    public void setMaturityPeriodYears(Integer maturityPeriodYears) { this.maturityPeriodYears = maturityPeriodYears; }
+
+    public LocalDate getNextMaturityDate() { return nextMaturityDate; }
+    public void setNextMaturityDate(LocalDate nextMaturityDate) { this.nextMaturityDate = nextMaturityDate; }
+
+    public Boolean getNearMaturity() { return nearMaturity; }
+
+    public String getSource() {
+        return source;
+    }
+
+    public Double getUpdatedPrincipal() {
+        return updatedPrincipal;
+    }
+
+    public void setUpdatedPrincipal(Double updatedPrincipal) {
+        this.updatedPrincipal = updatedPrincipal;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public void setNearMaturity(Boolean nearMaturity) { this.nearMaturity = nearMaturity; }
+
+    public LocalDate getLastCompoundedDate() {
+        return lastCompoundedDate;
+    }
+
+    public void setLastCompoundedDate(LocalDate lastCompoundedDate) {
+        this.lastCompoundedDate = lastCompoundedDate;
+    }
 }

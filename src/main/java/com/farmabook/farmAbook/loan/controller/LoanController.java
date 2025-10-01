@@ -1,7 +1,9 @@
 package com.farmabook.farmAbook.loan.controller;
 
+import com.farmabook.farmAbook.loan.repository.LoanPaymentRepository;
 import com.farmabook.farmAbook.loan.dto.LoanTransactionDTO;
 import com.farmabook.farmAbook.loan.dto.LoanPaymentDTO;
+import com.farmabook.farmAbook.loan.entity.LoanPayment;
 import com.farmabook.farmAbook.loan.service.LoanService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +18,11 @@ import java.util.List;
 public class LoanController {
 
     private final LoanService loanService;
+    private final LoanPaymentRepository loanPaymentRepository;
 
-    public LoanController(LoanService loanService) {
+    public LoanController(LoanService loanService , LoanPaymentRepository loanPaymentRepository) {
         this.loanService = loanService;
+        this.loanPaymentRepository = loanPaymentRepository;
     }
 
     @PostMapping
@@ -41,4 +45,20 @@ public class LoanController {
     public ResponseEntity<List<LoanTransactionDTO>> getLoansByFarmer(@PathVariable Long farmerId) {
         return ResponseEntity.ok(loanService.getLoansByFarmer(farmerId));
     }
+
+    @GetMapping("/{loanId}/payments")
+    public ResponseEntity<List<LoanPayment>> getPaymentsByLoan(@PathVariable Long loanId) {
+        List<LoanPayment> payments = loanPaymentRepository.findByLoanId(loanId);
+        return ResponseEntity.ok(payments);
+    }
+
+    // 🔑 GET /api/loans/farmer/{farmerId}/type?isGiven=true
+    @GetMapping("/farmer/{farmerId}/type")
+    public ResponseEntity<List<LoanTransactionDTO>> getLoansByFarmerAndType(
+            @PathVariable Long farmerId,
+            @RequestParam Boolean isGiven) {
+        return ResponseEntity.ok(loanService.getLoansByFarmerAndType(farmerId, isGiven));
+    }
+
+
 }
