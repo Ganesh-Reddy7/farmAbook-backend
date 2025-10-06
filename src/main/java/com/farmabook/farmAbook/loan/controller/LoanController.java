@@ -2,7 +2,7 @@ package com.farmabook.farmAbook.loan.controller;
 
 import com.farmabook.farmAbook.loan.repository.LoanPaymentRepository;
 import com.farmabook.farmAbook.loan.dto.LoanTransactionDTO;
-import com.farmabook.farmAbook.loan.dto.LoanPaymentDTO;
+import com.farmabook.farmAbook.loan.dto.*;
 import com.farmabook.farmAbook.loan.entity.LoanPayment;
 import com.farmabook.farmAbook.loan.service.LoanService;
 import org.springframework.http.ResponseEntity;
@@ -60,5 +60,16 @@ public class LoanController {
         return ResponseEntity.ok(loanService.getLoansByFarmerAndType(farmerId, isGiven));
     }
 
+    @PutMapping("/{id}/close")
+    public ResponseEntity<LoanTransactionDTO> closeLoan(@PathVariable Long id) {
+        LoanTransactionDTO closedLoan = loanService.closeLoan(id);
+        return ResponseEntity.ok(closedLoan);
+    }
+
+    @GetMapping("/{loanId}/raw-payments")
+    public ResponseEntity<List<LoanPaymentDTO>> getLoanPayments(@PathVariable Long loanId) {
+        List<LoanPaymentDTO> payments = loanService.getPaymentsByLoanId(loanId);
+        return ResponseEntity.ok(payments);
+    }
 
 }

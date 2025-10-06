@@ -11,4 +11,6 @@ public interface LoanPaymentRepository extends JpaRepository<LoanPayment, Long> 
 
     // Find all payments for a given loan
     List<LoanPayment> findByLoanId(Long loanId);
+    List<LoanPayment> findTop5ByLoan_Farmer_IdOrderByPaymentDateDesc(Long farmerId);
+
 }

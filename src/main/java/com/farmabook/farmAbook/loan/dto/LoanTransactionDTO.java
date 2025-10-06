@@ -1,8 +1,10 @@
 package com.farmabook.farmAbook.loan.dto;
 
 import org.springframework.web.multipart.MultipartFile;
-
+import com.farmabook.farmAbook.loan.entity.LoanPayment;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.ArrayList;
 
 public class LoanTransactionDTO {
 
@@ -22,6 +24,8 @@ public class LoanTransactionDTO {
     private String bondImagePath;
     private Double updatedPrincipal;
     private Double currentInterest;
+    private List<LoanPayment> payments = new ArrayList<>();
+
 
     // getter and setter
     public Double getCurrentInterest() { return currentInterest; }
@@ -109,6 +113,14 @@ public class LoanTransactionDTO {
 
     public LocalDate getLastCompoundedDate() {
         return lastCompoundedDate;
+    }
+
+    public List<LoanPayment> getPayments() {
+        return payments;
+    }
+
+    public void setPayments(List<LoanPayment> payments) {
+        this.payments = payments;
     }
 
     public void setLastCompoundedDate(LocalDate lastCompoundedDate) {
