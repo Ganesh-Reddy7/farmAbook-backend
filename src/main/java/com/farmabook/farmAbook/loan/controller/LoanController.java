@@ -52,7 +52,7 @@ public class LoanController {
         return ResponseEntity.ok(payments);
     }
 
-    // 🔑 GET /api/loans/farmer/{farmerId}/type?isGiven=true
+    //  GET /api/loans/farmer/{farmerId}/type?isGiven=true
     @GetMapping("/farmer/{farmerId}/type")
     public ResponseEntity<List<LoanTransactionDTO>> getLoansByFarmerAndType(
             @PathVariable Long farmerId,

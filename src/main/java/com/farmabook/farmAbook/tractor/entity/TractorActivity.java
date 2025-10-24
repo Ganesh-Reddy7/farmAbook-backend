@@ -53,6 +53,11 @@ public class TractorActivity {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @ManyToOne
+    @JoinColumn(name = "client_id")
+    private TractorClient client;
+
+
     public TractorActivity() {}
 
     /**
@@ -120,4 +125,12 @@ public class TractorActivity {
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public TractorClient getClient() {
+        return client;
+    }
+
+    public void setClient(TractorClient client) {
+        this.client = client;
+    }
 }
