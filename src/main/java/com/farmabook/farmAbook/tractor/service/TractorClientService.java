@@ -3,8 +3,12 @@ package com.farmabook.farmAbook.tractor.service;
 import com.farmabook.farmAbook.entity.Farmer;
 import com.farmabook.farmAbook.repository.FarmerRepository;
 import com.farmabook.farmAbook.tractor.dto.TractorClientDTO;
+import com.farmabook.farmAbook.tractor.dto.TractorActivityDTO;
 import com.farmabook.farmAbook.tractor.entity.TractorClient;
+import com.farmabook.farmAbook.tractor.entity.TractorActivity;
 import com.farmabook.farmAbook.tractor.repository.TractorClientRepository;
+import com.farmabook.farmAbook.tractor.repository.TractorActivityRepository;
+
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -16,15 +20,23 @@ public class TractorClientService {
 
     private final TractorClientRepository clientRepository;
     private final FarmerRepository farmerRepository;
+    private final TractorActivityRepository activityRepository;
 
-    public TractorClientService(TractorClientRepository clientRepository, FarmerRepository farmerRepository) {
+    public TractorClientService(
+            TractorClientRepository clientRepository,
+            FarmerRepository farmerRepository,
+            TractorActivityRepository activityRepository
+    ) {
         this.clientRepository = clientRepository;
         this.farmerRepository = farmerRepository;
+        this.activityRepository = activityRepository;
     }
 
     public TractorClientDTO addClient(TractorClientDTO dto) {
         Farmer farmer = farmerRepository.findById(dto.getFarmerId())
-                .orElseThrow(() -> new EntityNotFoundException("Farmer not found with id " + dto.getFarmerId()));
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Farmer not found with id " + dto.getFarmerId())
+                );
 
         TractorClient client = new TractorClient();
         client.setFarmer(farmer);
@@ -38,9 +50,42 @@ public class TractorClientService {
     }
 
     public List<TractorClientDTO> getClientsByFarmer(Long farmerId) {
-        return clientRepository.findByFarmerId(farmerId)
-                .stream().map(this::toDTO)
-                .collect(Collectors.toList());
+
+        List<TractorClient> clients = clientRepository.findByFarmerId(farmerId);
+
+        return clients.stream().map(client -> {
+
+            List<TractorActivity> activities =
+                    activityRepository.findByClientId(client.getId());
+
+            double totalAmount = activities.stream()
+                    .mapToDouble(a -> a.getAmountEarned() != null ? a.getAmountEarned() : 0.0)
+                    .sum();
+
+            double totalPaid = activities.stream()
+                    .mapToDouble(a -> a.getAmountPaid() != null ? a.getAmountPaid() : 0.0)
+                    .sum();
+
+            double pending = Math.max(totalAmount - totalPaid, 0.0);
+
+            double totalAcres = activities.stream()
+                    .mapToDouble(a -> a.getAcresWorked() != null ? a.getAcresWorked() : 0.0)
+                    .sum();
+
+            int trips = activities.size();
+
+            // Convert base client → DTO
+            TractorClientDTO dto = toDTO(client);
+
+            dto.setTotalAmount(totalAmount);
+            dto.setAmountReceived(totalPaid);
+            dto.setPendingAmount(pending);
+            dto.setTotalAcresWorked(totalAcres);
+            dto.setTotalTrips(trips);
+
+            return dto;
+
+        }).collect(Collectors.toList());
     }
 
     public void deleteClient(Long id) {

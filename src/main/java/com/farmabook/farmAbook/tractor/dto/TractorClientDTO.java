@@ -8,6 +8,12 @@ public class TractorClientDTO {
     private String address;
     private String notes;
 
+    private Double totalAmount;        // Total amount earned from activities
+    private Double amountReceived;     // Total paid by client
+    private Double pendingAmount;      // Remaining
+    private Double totalAcresWorked;   // Acres worked
+    private Integer totalTrips;
+
     // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -26,4 +32,44 @@ public class TractorClientDTO {
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public Double getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(Double totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public Double getAmountReceived() {
+        return amountReceived;
+    }
+
+    public void setAmountReceived(Double amountReceived) {
+        this.amountReceived = amountReceived;
+    }
+
+    public Double getPendingAmount() {
+        return pendingAmount;
+    }
+
+    public void setPendingAmount(Double pendingAmount) {
+        this.pendingAmount = pendingAmount;
+    }
+
+    public Double getTotalAcresWorked() {
+        return totalAcresWorked;
+    }
+
+    public void setTotalAcresWorked(Double totalAcresWorked) {
+        this.totalAcresWorked = totalAcresWorked;
+    }
+
+    public Integer getTotalTrips() {
+        return totalTrips;
+    }
+
+    public void setTotalTrips(Integer totalTrips) {
+        this.totalTrips = totalTrips;
+    }
 }

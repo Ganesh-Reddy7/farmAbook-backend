@@ -1,5 +1,8 @@
 package com.farmabook.farmAbook.tractor.dto;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+
 public class TractorDTO {
     private Long id;
     private String serialNumber;
@@ -7,7 +10,10 @@ public class TractorDTO {
     private String make;
     private Integer capacityHp;
     private String status;
-    private Long farmerId; // ✅ added
+    private Long farmerId;
+    private LocalDate purchaseDate;
+    private Double purchaseCost;
+
 
     public Long getFarmerId() {
         return farmerId;
@@ -32,6 +38,22 @@ public class TractorDTO {
 
     public Integer getCapacityHp() { return capacityHp; }
     public void setCapacityHp(Integer capacityHp) { this.capacityHp = capacityHp; }
+
+    public LocalDate getPurchaseDate() {
+        return purchaseDate;
+    }
+
+    public void setPurchaseDate(LocalDate purchaseDate) {
+        this.purchaseDate = purchaseDate;
+    }
+
+    public Double getPurchaseCost() {
+        return purchaseCost;
+    }
+
+    public void setPurchaseCost(Double purchaseCost) {
+        this.purchaseCost = purchaseCost;
+    }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

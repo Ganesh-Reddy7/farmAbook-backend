@@ -5,12 +5,14 @@ import com.farmabook.farmAbook.entity.Farmer;
 import com.farmabook.farmAbook.tractor.repository.TractorRepository;
 import com.farmabook.farmAbook.tractor.dto.TractorDTO;
 import com.farmabook.farmAbook.tractor.dto.TractorResponseDTO;
+import com.farmabook.farmAbook.tractor.dto.TractorSummaryDTO;
 import org.springframework.stereotype.Service;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,9 +42,66 @@ public class TractorService {
         tractor.setStatus(dto.getStatus());
         tractor.setFarmer(farmer);
 
+        // 🆕 Set new fields
+        tractor.setPurchaseDate(dto.getPurchaseDate());
+        tractor.setPurchaseCost(dto.getPurchaseCost());
+
         Tractor saved = tractorRepository.save(tractor);
         return toDTO(saved);
     }
+
+    public List<TractorSummaryDTO> getTractorSummariesByFarmer(Long farmerId) {
+        List<Tractor> tractors = tractorRepository.findByFarmerId(farmerId);
+        List<TractorSummaryDTO> summaries = new ArrayList<>();
+
+        for (Tractor tractor : tractors) {
+            double totalExpenses = tractor.getExpenses().stream()
+                    .mapToDouble(e -> e.getCost() != null ? e.getCost() : 0.0)
+                    .sum();
+
+            double totalFuelCost = tractor.getExpenses().stream()
+                    .filter(e -> e.getType() != null && e.getType().equalsIgnoreCase("FUEL"))
+                    .mapToDouble(e -> e.getCost() != null ? e.getCost() : 0.0)
+                    .sum();
+
+            double totalFuelLitres = tractor.getExpenses().stream()
+                    .filter(e -> e.getType() != null && e.getType().equalsIgnoreCase("FUEL"))
+                    .mapToDouble(e -> e.getLitres() != null ? e.getLitres() : 0.0)
+                    .sum();
+
+            double totalReturns = tractor.getActivities().stream()
+                    .mapToDouble(a -> a.getAmountEarned() != null ? a.getAmountEarned() : 0.0)
+                    .sum();
+
+            double totalAreaWorked = tractor.getActivities().stream()
+                    .mapToDouble(a -> a.getAcresWorked() != null ? a.getAcresWorked() : 0.0)
+                    .sum();
+
+            int totalTrips = tractor.getActivities().size();
+
+            TractorSummaryDTO dto = new TractorSummaryDTO();
+            dto.setTractorId(tractor.getId());
+            dto.setSerialNumber(tractor.getSerialNumber());
+            dto.setModel(tractor.getModel());
+            dto.setMake(tractor.getMake());
+            dto.setCapacityHp(tractor.getCapacityHp());
+            dto.setStatus(tractor.getStatus());
+            dto.setTotalExpenses(totalExpenses);
+            dto.setTotalFuelCost(totalFuelCost);
+            dto.setTotalFuelLitres(totalFuelLitres);
+            dto.setTotalReturns(totalReturns);
+            dto.setNetProfit(totalReturns - totalExpenses);
+            dto.setTotalAreaWorked(totalAreaWorked);
+            dto.setTotalTrips(totalTrips);
+
+            summaries.add(dto);
+        }
+
+        return summaries;
+    }
+
+
+
 
     // Get all tractors by farmer and convert to response DTOs
     public List<TractorResponseDTO> getAllTractorsByFarmer(Long farmerId) {

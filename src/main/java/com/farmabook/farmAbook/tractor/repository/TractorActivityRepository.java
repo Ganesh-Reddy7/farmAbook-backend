@@ -10,4 +10,6 @@ import java.util.List;
 public interface TractorActivityRepository extends JpaRepository<TractorActivity, Long> {
     List<TractorActivity> findByFarmerId(Long farmerId);
     List<TractorActivity> findByTractorId(Long tractorId);
+    // ✅ Add this method for client-based lookup
+    List<TractorActivity> findByClientId(Long clientId);
 }

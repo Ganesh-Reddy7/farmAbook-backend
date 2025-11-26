@@ -3,15 +3,19 @@ package com.farmabook.farmAbook.tractor.service;
 import com.farmabook.farmAbook.entity.Farmer;
 import com.farmabook.farmAbook.repository.FarmerRepository;
 import com.farmabook.farmAbook.tractor.dto.TractorActivityDTO;
+import com.farmabook.farmAbook.tractor.dto.ClientActivitySummaryDTO;
 import com.farmabook.farmAbook.tractor.entity.Tractor;
+import com.farmabook.farmAbook.tractor.entity.TractorClient;
 import com.farmabook.farmAbook.tractor.entity.TractorActivity;
 import com.farmabook.farmAbook.tractor.enums.PaymentStatus;
 import com.farmabook.farmAbook.tractor.repository.TractorActivityRepository;
 import com.farmabook.farmAbook.tractor.repository.TractorRepository;
+import com.farmabook.farmAbook.tractor.repository.TractorClientRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,15 +24,18 @@ public class TractorActivityService {
     private final TractorActivityRepository activityRepository;
     private final TractorRepository tractorRepository;
     private final FarmerRepository farmerRepository;
+    private final TractorClientRepository clientRepository;
 
     public TractorActivityService(
             TractorActivityRepository activityRepository,
             TractorRepository tractorRepository,
-            FarmerRepository farmerRepository
+            FarmerRepository farmerRepository,
+            TractorClientRepository clientRepository
     ) {
         this.activityRepository = activityRepository;
         this.tractorRepository = tractorRepository;
         this.farmerRepository = farmerRepository;
+        this.clientRepository = clientRepository;
     }
 
     // ✅ Create a new tractor activity
@@ -45,11 +52,23 @@ public class TractorActivityService {
         activity.setActivityDate(dto.getActivityDate());
         activity.setStartTime(dto.getStartTime());
         activity.setEndTime(dto.getEndTime());
-        activity.setClientName(dto.getClientName());
         activity.setAcresWorked(dto.getAcresWorked());
         activity.setAmountEarned(dto.getAmountEarned());
         activity.setNotes(dto.getNotes());
 
+        // ✅ Optional client mapping
+        if (dto.getClientId() != null) {
+            TractorClient client = clientRepository.findById(dto.getClientId())
+                    .orElseThrow(() -> new EntityNotFoundException("Client not found with id " + dto.getClientId()));
+            activity.setClient(client);
+            activity.setClientName(client.getName());
+        } else {
+            // fallback if clientId not provided
+            activity.setClient(null);
+            activity.setClientName(dto.getClientName());
+        }
+
+        // 💰 Payment calculations
         double paid = dto.getAmountPaid() != null ? dto.getAmountPaid() : 0.0;
         activity.setAmountPaid(paid);
 
@@ -66,6 +85,7 @@ public class TractorActivityService {
 
         return activityRepository.save(activity);
     }
+
 
     // ✅ Add a payment (partial or full)
     public TractorActivity addPayment(Long activityId, Double paymentAmount) {
@@ -112,6 +132,53 @@ public class TractorActivityService {
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
+
+    public ClientActivitySummaryDTO getActivitiesByClient(Long clientId) {
+
+        List<TractorActivity> activities = activityRepository.findByClientId(clientId);
+
+        List<TractorActivityDTO> activityDTOs = activities.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+
+        // ✅ Total earned (paid)
+        double totalEarned = activities.stream()
+                .mapToDouble(TractorActivity::getAmountPaid)
+                .sum();
+
+        // ✅ Total amount (amountEarned)
+        double totalAmountToBeReceived = activities.stream()
+                .mapToDouble(TractorActivity::getAmountEarned)
+                .sum();
+
+        // ✅ Remaining = amountEarned - amountPaid
+        double totalAmountRemaining = activities.stream()
+                .mapToDouble(a -> a.getAmountEarned() - a.getAmountPaid())
+                .sum();
+
+        // ✅ Total acres
+        double totalAcres = activities.stream()
+                .mapToDouble(TractorActivity::getAcresWorked)
+                .sum();
+
+        // ✅ Status-wise grouping by paymentStatus string
+        Map<String, List<TractorActivityDTO>> statusWise =
+                activityDTOs.stream()
+                        .collect(Collectors.groupingBy(TractorActivityDTO::getPaymentStatus));
+
+        // Build response
+        ClientActivitySummaryDTO summary = new ClientActivitySummaryDTO();
+        summary.setActivities(activityDTOs);
+        summary.setTotalEarned(totalEarned);
+        summary.setTotalAmountRemaining(totalAmountRemaining);
+        summary.setTotalAmountToBeReceived(totalAmountToBeReceived);
+        summary.setTotalAcres(totalAcres);
+        summary.setStatusWise(statusWise);
+
+        return summary;
+    }
+
+
 
     // ✅ Convert Entity → DTO
     public TractorActivityDTO toDTO(TractorActivity activity) {

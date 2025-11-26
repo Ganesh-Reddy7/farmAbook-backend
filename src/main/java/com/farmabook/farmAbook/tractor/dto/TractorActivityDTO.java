@@ -17,6 +17,7 @@ public class TractorActivityDTO {
     private Double amountRemaining;
     private String paymentStatus;
     private String notes;
+    private Long clientId; // ✅ optional
 
     // --- Getters and Setters ---
     public Long getId() { return id; }
@@ -57,4 +58,8 @@ public class TractorActivityDTO {
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public Long getClientId() { return clientId; }
+    public void setClientId(Long clientId) { this.clientId = clientId; }
+
 }

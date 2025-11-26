@@ -2,6 +2,7 @@ package com.farmabook.farmAbook.tractor.entity;
 
 import com.farmabook.farmAbook.entity.Farmer;
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +25,12 @@ public class Tractor {
 
     @Column(name = "tractor_status")
     private String status;
+
+    @Column(name = "purchase_date")
+    private LocalDate purchaseDate;   // 🆕 Tractor purchase date
+
+    @Column(name = "purchase_cost")
+    private Double purchaseCost;      // 🆕 Tractor purchase cost
 
     @ManyToOne
     @JoinColumn(name = "farmer_id", nullable = false)
@@ -56,6 +63,12 @@ public class Tractor {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public LocalDate getPurchaseDate() { return purchaseDate; }
+    public void setPurchaseDate(LocalDate purchaseDate) { this.purchaseDate = purchaseDate; }
+
+    public Double getPurchaseCost() { return purchaseCost; }
+    public void setPurchaseCost(Double purchaseCost) { this.purchaseCost = purchaseCost; }
 
     public Farmer getFarmer() { return farmer; }
     public void setFarmer(Farmer farmer) { this.farmer = farmer; }
