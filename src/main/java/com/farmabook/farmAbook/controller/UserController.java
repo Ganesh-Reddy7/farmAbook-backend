@@ -1,14 +1,17 @@
 package com.farmabook.farmAbook.controller;
 
+import com.farmabook.farmAbook.dto.ApiResponse;
+import com.farmabook.farmAbook.dto.AuthResponse;
+import com.farmabook.farmAbook.dto.LoginRequest;
 import com.farmabook.farmAbook.dto.UserDTO;
 import com.farmabook.farmAbook.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.http.ResponseEntity;
-import com.farmabook.farmAbook.dto.AuthResponse;
+import com.farmabook.farmAbook.util.ApiResponseUtil;
 import com.farmabook.farmAbook.util.JwtUtil;
-import com.farmabook.farmAbook.dto.LoginRequest;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -19,43 +22,88 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
     @Autowired
     private JwtUtil jwtUtil;
 
 
+    // Register User
     @PostMapping("/register")
-    public UserDTO registerUser(@RequestBody UserDTO userDTO) {
-        return userService.createUser(userDTO);
+    public ResponseEntity<ApiResponse<UserDTO>> registerUser(@RequestBody UserDTO userDTO) {
+        UserDTO savedUser = userService.createUser(userDTO);
+
+        return ApiResponseUtil.success(
+                HttpStatus.CREATED,
+                "User registered successfully",
+                savedUser
+        );
     }
 
+
+    // Login User
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest req) {
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@RequestBody LoginRequest req) {
+
         UserDTO user = userService.login(req.getPhone(), req.getPassword());
-        String token = jwtUtil.generateToken(String.valueOf(user.getId()), 60); // 60 min validity
-        return ResponseEntity.ok(new AuthResponse(token, user));
+
+        String token = jwtUtil.generateToken(String.valueOf(user.getId()), 60);
+
+        AuthResponse authResponse = new AuthResponse(token, user);
+
+        return ApiResponseUtil.success(
+                "Login successful",
+                authResponse
+        );
     }
+
+
     // Get all users
     @GetMapping
-    public List<UserDTO> getAllUsers() {
-        return userService.getAllUsers();
+    public ResponseEntity<ApiResponse<List<UserDTO>>> getAllUsers() {
+        List<UserDTO> users = userService.getAllUsers();
+
+        return ApiResponseUtil.success(
+                "Users fetched successfully",
+                users
+        );
     }
 
-    // Get user by id
+
+    // Get user by ID
     @GetMapping("/{id}")
-    public UserDTO getUserById(@PathVariable Long id) {
-        return userService.getUserById(id);
+    public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable Long id) {
+        UserDTO user = userService.getUserById(id);
+
+        return ApiResponseUtil.success(
+                "User fetched successfully",
+                user
+        );
     }
 
-    // Update role of a user
+
+    // Update user role
     @PutMapping("/{id}/role")
-    public UserDTO updateUserRole(@PathVariable Long id, @RequestParam String role) {
-        return userService.updateUserRole(id, role);
+    public ResponseEntity<ApiResponse<UserDTO>> updateUserRole(
+            @PathVariable Long id,
+            @RequestParam String role
+    ) {
+        UserDTO updated = userService.updateUserRole(id, role);
+
+        return ApiResponseUtil.success(
+                "User role updated successfully",
+                updated
+        );
     }
+
 
     // Delete user
     @DeleteMapping("/{id}")
-    public String deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<String>> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
-        return "User deleted successfully";
+
+        return ApiResponseUtil.success(
+                "User deleted successfully",
+                "OK"
+        );
     }
 }

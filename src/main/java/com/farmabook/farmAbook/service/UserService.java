@@ -66,7 +66,6 @@ public class UserService {
             farmer.setPhoneNumber(savedUser.getPhone());
             farmer.setUser(savedUser);
             farmerRepository.save(farmer);
-            // optional: set id back to DTO
         }
 
         return mapToDTO(savedUser);
@@ -79,21 +78,11 @@ public class UserService {
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new RuntimeException("Invalid credentials");
         }
-
-        // Generate token with subject=userId or phone
         String token = jwtUtil.generateToken(String.valueOf(user.getId()), 60); // 60 minutes
-
         UserDTO dto = mapToDTO(user);
-        // you can add token in DTO or return a wrapper
         dto.setPassword(null); // don't return password
-        // if you added token field to DTO:
-        // dto.setToken(token);
-
-        // For now return DTO and token in separate response object or header
-        // Simpler: return token as map or create an AuthResponse DTO
         return dto; // modify to return token as needed
     }
-
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll()
                 .stream()
