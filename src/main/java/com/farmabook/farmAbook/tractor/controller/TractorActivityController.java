@@ -1,10 +1,12 @@
 package com.farmabook.farmAbook.tractor.controller;
 
 import com.farmabook.farmAbook.tractor.dto.TractorActivityDTO;
+import com.farmabook.farmAbook.tractor.dto.ClientActivitySummaryDTO;
 import com.farmabook.farmAbook.tractor.entity.TractorActivity;
 import com.farmabook.farmAbook.tractor.service.TractorActivityService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.farmabook.farmAbook.tractor.dto.ActivityTrendRangeResponse;
 
 import java.util.List;
 
@@ -47,6 +49,27 @@ public class TractorActivityController {
     public ResponseEntity<List<TractorActivityDTO>> getByFarmer(@PathVariable Long farmerId) {
         List<TractorActivityDTO> activities = activityService.getActivitiesByFarmer(farmerId);
         return ResponseEntity.ok(activities);
+    }
+
+    @GetMapping("/trend/range/{farmerId}")
+    public ResponseEntity<ActivityTrendRangeResponse> getRangeTrend(
+            @PathVariable Long farmerId,
+            @RequestParam int startYear,
+            @RequestParam int endYear) {
+
+        return ResponseEntity.ok(
+                activityService.getActivityTrendRange(farmerId, startYear, endYear)
+        );
+    }
+
+    @GetMapping("/farmer/year-month-wise/{farmerId}/activities")
+    public ResponseEntity<ClientActivitySummaryDTO> getActivitiesByFarmer(
+            @PathVariable Long farmerId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month
+    ) {
+        ClientActivitySummaryDTO summary = activityService.getActivitiesByFarmer(farmerId, year, month);
+        return ResponseEntity.ok(summary);
     }
 
     // 5️⃣ Delete activity by ID

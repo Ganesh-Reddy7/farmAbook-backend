@@ -1,6 +1,9 @@
 package com.farmabook.farmAbook.tractor.controller;
 
 import com.farmabook.farmAbook.tractor.dto.TractorExpenseDTO;
+import com.farmabook.farmAbook.tractor.dto.ExpenseTrendRangeDTO;
+import com.farmabook.farmAbook.tractor.dto.YearlyExpenseDTO;
+import com.farmabook.farmAbook.tractor.dto.TractorExpenseSummaryDTO;
 import com.farmabook.farmAbook.tractor.service.TractorExpenseService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,4 +40,31 @@ public class TractorExpenseController {
         List<TractorExpenseDTO> expenses = expenseService.getExpensesByTractor(tractorId);
         return ResponseEntity.ok(expenses);
     }
+
+    @GetMapping("/expense-trend-range")
+    public ResponseEntity<ExpenseTrendRangeDTO> getExpenseTrendRange(
+            @RequestParam Long farmerId,
+            @RequestParam int startYear,
+            @RequestParam int endYear
+    ) {
+        return ResponseEntity.ok(
+                expenseService.getExpenseTrendRange(farmerId, startYear, endYear)
+        );
+    }
+
+    @GetMapping("/farmer/{farmerId}/summary")
+    public ResponseEntity<TractorExpenseSummaryDTO> getSummary(@PathVariable Long farmerId) {
+        return ResponseEntity.ok(expenseService.getFarmerExpenseSummary(farmerId));
+    }
+
+    @GetMapping("/farmer/year-month-wise/{farmerId}")
+    public ResponseEntity<List<TractorExpenseDTO>> getExpenses(
+            @PathVariable Long farmerId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month
+    ) {
+        return ResponseEntity.ok(expenseService.getExpensesByFilter(farmerId, year, month));
+    }
+
+
 }
