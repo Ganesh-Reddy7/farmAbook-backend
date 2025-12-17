@@ -1,8 +1,10 @@
 package com.farmabook.farmAbook.tractor.controller;
 
 import com.farmabook.farmAbook.tractor.dto.TractorDTO;
+import com.farmabook.farmAbook.tractor.dto.YearlyStatsResponse;
 import com.farmabook.farmAbook.tractor.dto.TractorResponseDTO;
 import com.farmabook.farmAbook.tractor.dto.TractorSummaryDTO;
+import com.farmabook.farmAbook.tractor.dto.MonthlyStatsResponse;
 import com.farmabook.farmAbook.tractor.service.TractorService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +47,24 @@ public class TractorController {
         return tractorService.getTractorById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/yearly-stats")
+    public ResponseEntity<YearlyStatsResponse> getYearlyStats(
+            @RequestParam Long farmerId,
+            @RequestParam int startYear,
+            @RequestParam int endYear
+    ) {
+        return ResponseEntity.ok(tractorService.getYearlyStats(farmerId, startYear, endYear));
+    }
+
+    @GetMapping("/monthly")
+    public ResponseEntity<MonthlyStatsResponse> getMonthlyStats(
+            @RequestParam Long farmerId,
+            @RequestParam Integer year,
+            @RequestParam(required = false) Long tractorId
+    ) {
+        return ResponseEntity.ok(tractorService.getMonthlyStats(farmerId, year, tractorId));
     }
 
     // Delete tractor

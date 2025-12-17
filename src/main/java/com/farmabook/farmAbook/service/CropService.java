@@ -130,7 +130,6 @@ public class CropService {
     }
 
     public List<CropDTO> getCropsDropdownByFinancialYear(Long farmerId, int startYear) {
-        // Financial year: May 1st startYear → April 30th next year
         LocalDate start = LocalDate.of(startYear, 5, 1);
         LocalDate end = LocalDate.of(startYear + 1, 4, 30);
 
@@ -140,7 +139,6 @@ public class CropService {
                     dto.setId(crop.getId());
                     dto.setName(crop.getName());
                     dto.setArea(crop.getArea());
-                    // leave the rest null
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -235,6 +233,7 @@ public class CropService {
         dto.setTotalInvestment(crop.getTotalInvestment());
         dto.setRemainingInvestment(crop.getRemainingInvestment());
         dto.setTotalReturns(crop.getTotalReturns());
+        dto.setTotalProduction(crop.getTotalProduction());
         return dto;
     }
 }

@@ -12,7 +12,6 @@ import java.util.List;
 public interface TractorActivityRepository extends JpaRepository<TractorActivity, Long> {
     List<TractorActivity> findByFarmerId(Long farmerId);
     List<TractorActivity> findByTractorId(Long tractorId);
-    // ✅ Add this method for client-based lookup
     List<TractorActivity> findByClientId(Long clientId);
     @Query("SELECT a FROM TractorActivity a " +
             "WHERE a.farmer.id = :farmerId " +
@@ -31,5 +30,17 @@ public interface TractorActivityRepository extends JpaRepository<TractorActivity
             @Param("year") Integer year,
             @Param("month") Integer month
     );
+    @Query("""
+    SELECT a FROM TractorActivity a
+    WHERE a.farmer.id = :farmerId
+      AND YEAR(a.activityDate) = :year
+      AND (:tractorId IS NULL OR a.tractor.id = :tractorId)
+""")
+    List<TractorActivity> findMonthlyReturnsFlexible(
+            @Param("farmerId") Long farmerId,
+            @Param("year") int year,
+            @Param("tractorId") Long tractorId
+    );
+
 
 }

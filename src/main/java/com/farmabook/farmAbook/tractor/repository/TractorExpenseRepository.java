@@ -32,6 +32,18 @@ public interface TractorExpenseRepository extends JpaRepository<TractorExpense, 
             @Param("year") Integer year,
             @Param("month") Integer month
     );
+    @Query("""
+    SELECT e FROM TractorExpense e
+    WHERE e.farmer.id = :farmerId
+      AND YEAR(e.expenseDate) = :year
+      AND (:tractorId IS NULL OR e.tractor.id = :tractorId)
+    """)
+    List<TractorExpense> findMonthlyExpensesFlexible(
+            @Param("farmerId") Long farmerId,
+            @Param("year") int year,
+            @Param("tractorId") Long tractorId
+    );
+
 
 
 }
