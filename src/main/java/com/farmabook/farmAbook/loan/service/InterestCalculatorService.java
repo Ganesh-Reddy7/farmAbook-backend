@@ -21,7 +21,6 @@ public class InterestCalculatorService {
     @Autowired
     private InterestCalculationHistoryRepository historyRepository;
 
-    // simple helper class
     public static class InterestDuration {
         int months;
         int days;
@@ -33,63 +32,91 @@ public class InterestCalculatorService {
     }
 
     private InterestDuration calculateDuration(LocalDate start, LocalDate end) {
-        long totalDays = ChronoUnit.DAYS.between(start, end);
-        if (totalDays <= 0) {
+
+        if (end.isBefore(start)) {
             return new InterestDuration(0, 0);
         }
 
-        int months = (int) (totalDays / 30);
-        int days = (int) (totalDays % 30);
+        int months = 0;
+        LocalDate temp = start;
+
+        // Count full calendar months
+        while (!temp.plusMonths(1).isAfter(end)) {
+            temp = temp.plusMonths(1);
+            months++;
+        }
+
+        // Remaining days after full months
+        int days = (int) ChronoUnit.DAYS.between(temp, end);
 
         return new InterestDuration(months, days);
     }
+
 
     public InterestCalculatorResponse calculateSimpleInterest(
             InterestCalculatorRequest req
     ) {
         validate(req);
+
         double principal = req.getPrincipal();
         double monthlyRate = req.getRate() / 100.0;
+
         InterestDuration d = calculateDuration(
                 req.getStartDate(),
                 req.getEndDate()
         );
-        double interestForMonths = principal * monthlyRate * d.months;
-        double interestForDays = principal * (monthlyRate / 30) * d.days;
-        double interest = interestForMonths + interestForDays;
+
+        double monthlyInterest = principal * monthlyRate;
+        double dailyInterest = monthlyInterest / 30;
+
+        double interest =
+                (monthlyInterest * d.months) +
+                        (dailyInterest * d.days);
+
         double total = principal + interest;
+
         saveHistory(req, "SIMPLE", interest, total);
         return buildResponse("SIMPLE", interest, total);
     }
+
 
 
     public InterestCalculatorResponse calculateCompoundInterest(
             InterestCalculatorRequest req
     ) {
         validate(req);
+
         double principal = req.getPrincipal();
         double monthlyRate = req.getRate() / 100.0;
+
         InterestDuration d = calculateDuration(
                 req.getStartDate(),
                 req.getEndDate()
         );
+
         int frequency = req.getCompoundingFrequency() != null ? req.getCompoundingFrequency() : 12;
-        double years = d.months / 12.0;
-        double annualRate = monthlyRate * 12;
-        double amountAfterMonths =
-                principal * Math.pow(
-                        1 + (annualRate / frequency),
-                        frequency * years
-                );
+
+        int monthsPerPeriod = 12 / frequency;
+
+        int fullPeriods = d.months / monthsPerPeriod;
+
+        double ratePerPeriod = (monthlyRate * 12) / frequency;
+
+        double amountAfterCompounding = principal * Math.pow(1 + ratePerPeriod, fullPeriods);
+
+        int remainingMonths = d.months % monthsPerPeriod;
+
+        double amountAfterRemainingMonths = amountAfterCompounding * (1 + monthlyRate * remainingMonths);
 
         double dailyRate = monthlyRate / 30;
-        double interestForDays = amountAfterMonths * dailyRate * d.days;
+        double finalAmount = amountAfterRemainingMonths + (amountAfterRemainingMonths * dailyRate * d.days);
 
-        double finalAmount = amountAfterMonths + interestForDays;
         double interest = finalAmount - principal;
+
         saveHistory(req, "COMPOUND", interest, finalAmount);
         return buildResponse("COMPOUND", interest, finalAmount);
     }
+
 
 
     private double calculateMonths(LocalDate start, LocalDate end) {

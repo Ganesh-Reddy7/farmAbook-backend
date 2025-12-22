@@ -37,16 +37,12 @@ public class LoanService {
 
     private static final String UPLOAD_DIR = "uploads/bonds/";
 
-    // -------------------------------------------------
-    // CREATE LOAN
-    // -------------------------------------------------
     public LoanTransactionDTO createLoan(
             LoanTransactionDTO dto,
             MultipartFile bondImage
     ) throws IOException {
 
-        Farmer farmer = farmerRepository.findById(dto.getFarmerId())
-                .orElseThrow(() -> new LoanNotFoundException("Farmer not found"));
+        Farmer farmer = farmerRepository.findById(dto.getFarmerId()).orElseThrow(() -> new LoanNotFoundException("Farmer not found"));
 
         LoanTransaction loan = new LoanTransaction();
         loan.setFarmer(farmer);
@@ -81,55 +77,73 @@ public class LoanService {
 
         return mapToDTO(loanRepository.save(loan));
     }
+    private InterestCalculatorService.InterestDuration calculateDuration(LocalDate start, LocalDate end) {
+        if (end.isBefore(start)) {
+            return new InterestCalculatorService.InterestDuration(0, 0);
+        }
 
-    // -------------------------------------------------
-    // SIMPLE INTEREST BETWEEN TWO DATES (PURE)
-    // -------------------------------------------------
+        int months = 0;
+        LocalDate temp = start;
+
+        while (!temp.plusMonths(1).isAfter(end)) {
+            temp = temp.plusMonths(1);
+            months++;
+        }
+        int days = (int) ChronoUnit.DAYS.between(temp, end);
+
+        return new InterestCalculatorService.InterestDuration(months, days);
+    }
+
     private double calculateInterest(
             double principal,
-            double monthlyRate,
+            double monthlyRatePercent,
             LocalDate from,
             LocalDate to
     ) {
-        long days = ChronoUnit.DAYS.between(from, to);
-        if (days <= 0) return 0.0;
+        if (to.isBefore(from)) return 0.0;
 
-        double annualRate = monthlyRate * 12; // 🔥 FIX
-        return principal * (annualRate / 100.0) * days / 365.0;
+        // Calendar-based duration
+        InterestCalculatorService.InterestDuration d = calculateDuration(from, to);
+
+        double monthlyRate = monthlyRatePercent / 100.0;
+        double monthlyInterest = principal * monthlyRate;
+        double dailyInterest = monthlyInterest / 30;
+
+        return (monthlyInterest * d.months) +
+                (dailyInterest * d.days);
     }
 
 
-    // -------------------------------------------------
-    // APPLY COMPOUNDING (ONLY AT MATURITY)
-    // -------------------------------------------------
     private void applyCompounding(LoanTransaction loan) {
 
-        if (loan.getMaturityPeriodYears() == null || loan.getMaturityPeriodYears() <= 0)
+        if (loan.getMaturityPeriodYears() == null ||
+                loan.getMaturityPeriodYears() <= 0 ||
+                loan.getNextMaturityDate() == null) {
             return;
-
-        if (loan.getNextMaturityDate() == null)
-            return;
+        }
 
         LocalDate today = LocalDate.now();
 
-        if (today.isBefore(loan.getNextMaturityDate()))
+        if (today.isBefore(loan.getNextMaturityDate())) {
             return;
+        }
 
-        // Interest ONLY till maturity date
-        double interest = calculateInterest(
+        // Calculate interest ONLY till maturity date
+        double interestTillMaturity = calculateInterest(
                 loan.getUpdatedPrincipal(),
-                loan.getInterestRate(),
+                loan.getInterestRate(), // monthly %
                 loan.getLastCompoundedDate(),
                 loan.getNextMaturityDate()
         );
 
-        double newPrincipal = loan.getUpdatedPrincipal() + interest;
+        double newPrincipal = loan.getUpdatedPrincipal() + interestTillMaturity;
 
         loan.setUpdatedPrincipal(newPrincipal);
         loan.setRemainingPrincipal(
                 Math.max(newPrincipal - loan.getAmountPaid(), 0.0)
         );
 
+        // Move compounding window forward
         loan.setLastCompoundedDate(loan.getNextMaturityDate());
         loan.setNextMaturityDate(
                 loan.getNextMaturityDate().plusYears(loan.getMaturityPeriodYears())
@@ -142,9 +156,7 @@ public class LoanService {
         loanRepository.save(loan);
     }
 
-    // -------------------------------------------------
-    // MAKE PAYMENT
-    // -------------------------------------------------
+
     public LoanTransactionDTO makePayment(LoanPaymentDTO paymentDTO) {
 
         LoanTransaction loan = loanRepository.findById(paymentDTO.getId())
@@ -155,13 +167,13 @@ public class LoanService {
 
         LocalDate today = LocalDate.now();
 
-        // 1️⃣ Apply compounding if maturity crossed
+        // Apply compounding if maturity crossed
         applyCompounding(loan);
 
-        // 2️⃣ Interest since last compounding/payment
+        // Calculate interest till today
         double interestDue = calculateInterest(
                 loan.getUpdatedPrincipal(),
-                loan.getInterestRate(),
+                loan.getInterestRate(), // monthly %
                 loan.getLastCompoundedDate(),
                 today
         );
@@ -175,8 +187,10 @@ public class LoanService {
                 Math.max(loan.getRemainingPrincipal() - principalPaid, 0.0)
         );
 
-        // Reset interest window
-        loan.setLastCompoundedDate(today);
+        // Move interest window ONLY if interest was paid
+        if (interestPaid > 0) {
+            loan.setLastCompoundedDate(today);
+        }
 
         LoanPayment payment = new LoanPayment();
         payment.setLoan(loan);
@@ -194,9 +208,7 @@ public class LoanService {
         return mapToDTO(loanRepository.save(loan));
     }
 
-    // -------------------------------------------------
-    // CURRENT INTEREST (READ ONLY)
-    // -------------------------------------------------
+
     public double calculateCurrentInterest(Long loanId) {
 
         LoanTransaction loan = loanRepository.findById(loanId)
@@ -204,15 +216,13 @@ public class LoanService {
 
         return calculateInterest(
                 loan.getUpdatedPrincipal(),
-                loan.getInterestRate(),
+                loan.getInterestRate(), // monthly %
                 loan.getLastCompoundedDate(),
                 LocalDate.now()
         );
     }
 
-    // -------------------------------------------------
-    // FETCH LOANS
-    // -------------------------------------------------
+
     public List<LoanTransactionDTO> getLoansByFarmer(Long farmerId) {
         return loanRepository.findByFarmerId(farmerId)
                 .stream()
@@ -252,9 +262,6 @@ public class LoanService {
                 .collect(Collectors.toList());
     }
 
-    // -------------------------------------------------
-    // CLOSE LOAN
-    // -------------------------------------------------
     public LoanTransactionDTO closeLoan(Long loanId) {
 
         LoanTransaction loan = loanRepository.findById(loanId)
@@ -282,9 +289,6 @@ public class LoanService {
         return mapToDTO(loanRepository.save(loan));
     }
 
-    // -------------------------------------------------
-    // MAP TO DTO
-    // -------------------------------------------------
     public LoanTransactionDTO mapToDTO(LoanTransaction loan) {
         LoanTransactionDTO dto = new LoanTransactionDTO();
         dto.setId(loan.getId());
@@ -312,9 +316,7 @@ public class LoanService {
         return dto;
     }
 
-    // -------------------------------------------------
-    // FETCH PAYMENTS
-    // -------------------------------------------------
+
     public List<LoanPaymentDTO> getPaymentsByLoanId(Long loanId) {
 
         loanRepository.findById(loanId)
