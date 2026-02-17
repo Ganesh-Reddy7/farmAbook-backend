@@ -45,7 +45,6 @@ public class TractorActivityService {
         this.clientRepository = clientRepository;
     }
 
-    // ✅ Create a new tractor activity
     public TractorActivity createActivity(TractorActivityDTO dto) {
         Tractor tractor = tractorRepository.findById(dto.getTractorId())
                 .orElseThrow(() -> new EntityNotFoundException("Tractor not found with id " + dto.getTractorId()));
@@ -63,19 +62,15 @@ public class TractorActivityService {
         activity.setAmountEarned(dto.getAmountEarned());
         activity.setNotes(dto.getNotes());
 
-        // ✅ Optional client mapping
         if (dto.getClientId() != null) {
-            TractorClient client = clientRepository.findById(dto.getClientId())
-                    .orElseThrow(() -> new EntityNotFoundException("Client not found with id " + dto.getClientId()));
+            TractorClient client = clientRepository.findById(dto.getClientId()).orElseThrow(() -> new EntityNotFoundException("Client not found with id " + dto.getClientId()));
             activity.setClient(client);
             activity.setClientName(client.getName());
         } else {
-            // fallback if clientId not provided
             activity.setClient(null);
             activity.setClientName(dto.getClientName());
         }
 
-        // 💰 Payment calculations
         double paid = dto.getAmountPaid() != null ? dto.getAmountPaid() : 0.0;
         activity.setAmountPaid(paid);
 

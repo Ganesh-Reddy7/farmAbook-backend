@@ -5,6 +5,7 @@ import com.farmabook.farmAbook.entity.Farmer;
 import com.farmabook.farmAbook.entity.User;
 import com.farmabook.farmAbook.repository.FarmerRepository;
 import com.farmabook.farmAbook.repository.UserRepository;
+import com.farmabook.farmAbook.tractor.service.TractorClientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +30,9 @@ public class UserService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private TractorClientService tractorClientService;
 
 
     // Convert Entity → DTO
@@ -66,6 +70,7 @@ public class UserService {
             farmer.setPhoneNumber(savedUser.getPhone());
             farmer.setUser(savedUser);
             farmerRepository.save(farmer);
+            tractorClientService.ensureSystemClients(farmer , savedUser);
         }
 
         return mapToDTO(savedUser);
@@ -80,8 +85,8 @@ public class UserService {
         }
         String token = jwtUtil.generateToken(String.valueOf(user.getId()), 60); // 60 minutes
         UserDTO dto = mapToDTO(user);
-        dto.setPassword(null); // don't return password
-        return dto; // modify to return token as needed
+        dto.setPassword(null);
+        return dto;
     }
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll()

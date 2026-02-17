@@ -3,9 +3,11 @@ package com.farmabook.farmAbook.tractor.entity;
 import com.farmabook.farmAbook.entity.Farmer;
 import com.farmabook.farmAbook.tractor.enums.PaymentStatus;
 import jakarta.persistence.*;
+import lombok.Data;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
-
+@Data
 @Entity
 @Table(name = "tractor_activity")
 public class TractorActivity {
@@ -86,51 +88,4 @@ public class TractorActivity {
         }
     }
 
-    // --- Getters & Setters ---
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public Tractor getTractor() { return tractor; }
-    public void setTractor(Tractor tractor) { this.tractor = tractor; }
-
-    public Farmer getFarmer() { return farmer; }
-    public void setFarmer(Farmer farmer) { this.farmer = farmer; }
-
-    public LocalDate getActivityDate() { return activityDate; }
-    public void setActivityDate(LocalDate activityDate) { this.activityDate = activityDate; }
-
-    public LocalTime getStartTime() { return startTime; }
-    public void setStartTime(LocalTime startTime) { this.startTime = startTime; }
-
-    public LocalTime getEndTime() { return endTime; }
-    public void setEndTime(LocalTime endTime) { this.endTime = endTime; }
-
-    public String getClientName() { return clientName; }
-    public void setClientName(String clientName) { this.clientName = clientName; }
-
-    public Double getAcresWorked() { return acresWorked; }
-    public void setAcresWorked(Double acresWorked) { this.acresWorked = acresWorked; }
-
-    public Double getAmountEarned() { return amountEarned; }
-    public void setAmountEarned(Double amountEarned) { this.amountEarned = amountEarned; }
-
-    public Double getAmountPaid() { return amountPaid; }
-    public void setAmountPaid(Double amountPaid) { this.amountPaid = amountPaid; }
-
-    public Double getAmountRemaining() { return amountRemaining; }
-    public void setAmountRemaining(Double amountRemaining) { this.amountRemaining = amountRemaining; }
-
-    public PaymentStatus getPaymentStatus() { return paymentStatus; }
-    public void setPaymentStatus(PaymentStatus paymentStatus) { this.paymentStatus = paymentStatus; }
-
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
-
-    public TractorClient getClient() {
-        return client;
-    }
-
-    public void setClient(TractorClient client) {
-        this.client = client;
-    }
 }

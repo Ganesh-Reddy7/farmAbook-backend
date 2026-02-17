@@ -1,4 +1,4 @@
-package com.farmabook.farmabook.tractor.enums;
+package com.farmabook.farmAbook.tractor.enums;
 
 public enum TractorScheduleStatus {
     PENDING,
